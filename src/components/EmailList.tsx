@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   Info,
   Eye,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import {
   Tooltip,
@@ -27,9 +28,10 @@ interface EmailListProps {
   onSelectAll: () => void;
   onPreview: (email: Email) => void;
   onRemove: (emailId: string) => void;
+  onMarkNotSpam?: (email: Email) => void;
 }
 
-export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }: EmailListProps) => {
+export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, onMarkNotSpam }: EmailListProps) => {
   const allSelected = emails.length > 0 && emails.every(e => e.selected);
 
   const getConfidenceBadge = (confidence?: string) => {
@@ -137,7 +139,25 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
+                    {onMarkNotSpam && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onMarkNotSpam(email);
+                            }}
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Not Spam</TooltipContent>
+                      </Tooltip>
+                    )}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button 

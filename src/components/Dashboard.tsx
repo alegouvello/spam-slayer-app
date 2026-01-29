@@ -423,6 +423,14 @@ export const Dashboard = () => {
     toast.success('Email removed from list');
   };
 
+  const handleMarkNotSpam = async (email: Email) => {
+    // Save feedback that this sender is NOT spam
+    await saveSenderFeedback(email, false);
+    
+    // Remove from the list since it's not spam
+    setEmails(prev => prev.filter(e => e.id !== email.id));
+  };
+
   const handleUnsubscribeFromPreview = async (email: Email) => {
     if (email.hasListUnsubscribe) {
       try {
@@ -679,6 +687,7 @@ export const Dashboard = () => {
                     onSelectAll={handleSelectAll}
                     onPreview={handlePreviewEmail}
                     onRemove={handleRemoveEmail}
+                    onMarkNotSpam={handleMarkNotSpam}
                   />
                 </div>
               </div>
