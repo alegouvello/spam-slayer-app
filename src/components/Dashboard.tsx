@@ -13,7 +13,9 @@ import {
   AlertCircle, 
   Clock,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Inbox,
+  FolderOpen
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
@@ -28,6 +30,7 @@ import dashboardBg from '@/assets/dashboard-bg.jpg';
 export const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
+  const [folderFilter, setFolderFilter] = useState<'all' | 'spam' | 'trash'>('all');
   const [isScanning, setIsScanning] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -41,6 +44,15 @@ export const Dashboard = () => {
     deletedEmails: 0,
     webLinksOpened: 0,
   });
+
+  // Filter emails based on folder selection
+  const filteredEmails = emails.filter(email => {
+    if (folderFilter === 'all') return true;
+    return email.folder === folderFilter;
+  });
+
+  const spamFolderCount = emails.filter(e => e.folder === 'spam').length;
+  const trashFolderCount = emails.filter(e => e.folder === 'trash').length;
 
   const handleScanSpam = async () => {
     setIsScanning(true);
@@ -201,7 +213,7 @@ export const Dashboard = () => {
     setIsProcessing(false);
   };
 
-  const spamCount = emails.filter(e => 
+  const spamCount = filteredEmails.filter(e => 
     e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
   ).length;
 
@@ -212,8 +224,11 @@ export const Dashboard = () => {
   };
 
   const handleSelectAll = () => {
-    const allSelected = emails.every(e => e.selected);
-    setEmails(prev => prev.map(email => ({ ...email, selected: !allSelected })));
+    const allSelected = filteredEmails.every(e => e.selected);
+    const filteredIds = new Set(filteredEmails.map(e => e.id));
+    setEmails(prev => prev.map(email => 
+      filteredIds.has(email.id) ? { ...email, selected: !allSelected } : email
+    ));
   };
 
   const handleProcess = async () => {
@@ -338,7 +353,7 @@ export const Dashboard = () => {
     }
   };
 
-  const selectedCount = emails.filter(e => e.selected).length;
+  const selectedCount = filteredEmails.filter(e => e.selected).length;
 
   return (
     <div className="min-h-screen relative">
@@ -476,15 +491,48 @@ export const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Email List */}
+            {/* Folder Filter & Email List */}
             {emails.length > 0 && (
-              <EmailList 
-                emails={emails}
-                onSelect={handleSelectEmail}
-                onSelectAll={handleSelectAll}
-                onPreview={handlePreviewEmail}
-                onRemove={handleRemoveEmail}
-              />
+              <div className="space-y-4">
+                {/* Folder Filter Tabs */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={folderFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFolderFilter('all')}
+                    className="gap-2 rounded-full"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    All ({emails.length})
+                  </Button>
+                  <Button
+                    variant={folderFilter === 'spam' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFolderFilter('spam')}
+                    className="gap-2 rounded-full"
+                  >
+                    <Inbox className="h-4 w-4" />
+                    Spam ({spamFolderCount})
+                  </Button>
+                  <Button
+                    variant={folderFilter === 'trash' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFolderFilter('trash')}
+                    className="gap-2 rounded-full"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Trash ({trashFolderCount})
+                  </Button>
+                </div>
+
+                <EmailList 
+                  emails={filteredEmails}
+                  onSelect={handleSelectEmail}
+                  onSelectAll={handleSelectAll}
+                  onPreview={handlePreviewEmail}
+                  onRemove={handleRemoveEmail}
+                />
+              </div>
             )}
 
             {/* Email Preview Dialog */}
