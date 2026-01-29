@@ -138,29 +138,50 @@ serve(async (req) => {
       }
 
       // Fetch spam folder messages
-      const listResponse = await fetch(
-        'https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=SPAM&maxResults=50',
+      const spamResponse = await fetch(
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=SPAM&maxResults=30',
         {
           headers: { 'Authorization': `Bearer ${accessToken}` },
         }
       );
 
-      if (!listResponse.ok) {
-        const error = await listResponse.json();
-        console.error('Gmail API list error:', error);
-        return new Response(JSON.stringify({ error: 'Failed to fetch emails' }), {
+      // Fetch trash folder messages
+      const trashResponse = await fetch(
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=TRASH&maxResults=30',
+        {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        }
+      );
+
+      if (!spamResponse.ok) {
+        const error = await spamResponse.json();
+        console.error('Gmail API spam list error:', error);
+        return new Response(JSON.stringify({ error: 'Failed to fetch spam emails' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      const listData = await listResponse.json();
-      const messages = listData.messages || [];
-      console.log(`Found ${messages.length} messages in spam folder`);
+      const spamData = await spamResponse.json();
+      const spamMessages = (spamData.messages || []).map((m: any) => ({ ...m, folder: 'spam' }));
+      
+      let trashMessages: any[] = [];
+      if (trashResponse.ok) {
+        const trashData = await trashResponse.json();
+        trashMessages = (trashData.messages || []).map((m: any) => ({ ...m, folder: 'trash' }));
+      }
+
+      // Combine and deduplicate by ID
+      const allMessages = [...spamMessages, ...trashMessages];
+      const uniqueMessages = allMessages.filter((msg, index, self) => 
+        index === self.findIndex(m => m.id === msg.id)
+      );
+      
+      console.log(`Found ${spamMessages.length} spam + ${trashMessages.length} trash = ${uniqueMessages.length} unique messages`);
 
       // Fetch full message details for each
       const emails = await Promise.all(
-        messages.slice(0, 30).map(async (msg: { id: string }) => {
+        uniqueMessages.slice(0, 40).map(async (msg: { id: string; folder: string }) => {
           const msgResponse = await fetch(
             `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
             {
@@ -201,6 +222,7 @@ serve(async (req) => {
             date: new Date(parseInt(msgData.internalDate)).toISOString(),
             hasListUnsubscribe: hasHeader,
             unsubscribeLink: unsubscribeLink,
+            folder: msg.folder,
           };
         })
       );
