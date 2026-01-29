@@ -2,21 +2,21 @@ import { Email } from '@/types/email';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Mail, 
-  Calendar, 
-  User, 
+  X, 
+  Zap, 
   ExternalLink, 
-  Zap,
-  X,
-  Trash2
+  Calendar, 
+  User,
+  Mail
 } from 'lucide-react';
 
 interface EmailPreviewDialogProps {
@@ -27,12 +27,12 @@ interface EmailPreviewDialogProps {
   onUnsubscribe: (email: Email) => void;
 }
 
-export const EmailPreviewDialog = ({ 
-  email, 
-  open, 
+export const EmailPreviewDialog = ({
+  email,
+  open,
   onOpenChange,
   onRemove,
-  onUnsubscribe
+  onUnsubscribe,
 }: EmailPreviewDialogProps) => {
   if (!email) return null;
 
@@ -48,95 +48,98 @@ export const EmailPreviewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-start gap-2 pr-8">
-            <Mail className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
-            <span className="line-clamp-2">{email.subject}</span>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 flex-1 min-h-0">
-          {/* Email metadata */}
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <User className="h-4 w-4" />
-              <span className="font-medium text-foreground">{email.sender}</span>
-              <span>&lt;{email.senderEmail}&gt;</span>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-lg font-medium leading-tight mb-2">
+                {email.subject}
+              </DialogTitle>
+              <DialogDescription className="flex items-center gap-4 text-sm">
+                <span className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" />
+                  {email.sender}
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {new Date(email.date).toLocaleDateString()}
+                </span>
+              </DialogDescription>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>{new Date(email.date).toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex gap-2">
               {email.hasListUnsubscribe && (
-                <Badge variant="outline" className="gap-1">
-                  <Zap className="h-3 w-3" /> Auto-unsubscribe available
+                <Badge variant="outline" className="gap-1 text-xs font-normal text-primary border-primary/30">
+                  <Zap className="h-3 w-3" /> Auto
                 </Badge>
               )}
               {email.unsubscribeLink && !email.hasListUnsubscribe && (
-                <Badge variant="outline" className="gap-1">
-                  <ExternalLink className="h-3 w-3" /> Web unsubscribe
+                <Badge variant="outline" className="gap-1 text-xs font-normal">
+                  <ExternalLink className="h-3 w-3" /> Web
                 </Badge>
-              )}
-              {email.spamConfidence === 'definitely_spam' && (
-                <Badge variant="destructive">Definitely Spam</Badge>
-              )}
-              {email.spamConfidence === 'likely_spam' && (
-                <Badge className="bg-warning text-warning-foreground">Likely Spam</Badge>
-              )}
-              {email.spamConfidence === 'might_be_important' && (
-                <Badge variant="secondary">Might Be Important</Badge>
               )}
             </div>
           </div>
+        </DialogHeader>
 
-          <Separator />
+        <Separator />
 
-          {/* Email body */}
-          <ScrollArea className="flex-1 min-h-[200px] max-h-[300px]">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              {email.body ? (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: email.body }} 
-                  className="text-sm leading-relaxed"
-                />
-              ) : (
-                <p className="text-muted-foreground italic">{email.snippet}</p>
-              )}
-            </div>
-          </ScrollArea>
+        <ScrollArea className="flex-1 px-6 py-4">
+          <div className="prose prose-sm max-w-none text-foreground">
+            {email.body ? (
+              <div dangerouslySetInnerHTML={{ __html: email.body }} />
+            ) : email.snippet ? (
+              <p className="text-muted-foreground">{email.snippet}</p>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Mail className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                <p className="text-muted-foreground text-sm">
+                  Email content preview not available
+                </p>
+              </div>
+            )}
+          </div>
 
           {email.aiReasoning && (
-            <>
-              <Separator />
-              <div className="text-sm">
-                <span className="font-medium text-muted-foreground">AI Analysis: </span>
-                <span className="italic">"{email.aiReasoning}"</span>
-              </div>
-            </>
+            <div className="mt-6 p-4 rounded-lg bg-accent/50 border border-accent">
+              <p className="text-xs font-medium text-muted-foreground mb-1">AI Analysis</p>
+              <p className="text-sm">{email.aiReasoning}</p>
+            </div>
           )}
-        </div>
+        </ScrollArea>
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-4 border-t">
+        <Separator />
+
+        <div className="p-4 flex items-center justify-between gap-3">
           <Button 
-            variant="outline" 
+            variant="ghost" 
+            size="sm"
             onClick={handleRemove}
-            className="gap-2"
+            className="text-muted-foreground hover:text-destructive"
           >
-            <X className="h-4 w-4" />
-            Remove from List
+            <X className="h-4 w-4 mr-1.5" />
+            Remove
           </Button>
-          {(email.hasListUnsubscribe || email.unsubscribeLink) && (
-            <Button 
-              onClick={handleUnsubscribe}
-              className="gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              {email.hasListUnsubscribe ? 'Unsubscribe & Delete' : 'Open Unsubscribe Link'}
+          
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Close
             </Button>
-          )}
+            {(email.hasListUnsubscribe || email.unsubscribeLink) && (
+              <Button size="sm" onClick={handleUnsubscribe} className="rounded-full">
+                {email.hasListUnsubscribe ? (
+                  <>
+                    <Zap className="h-4 w-4 mr-1.5" />
+                    Unsubscribe
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-1.5" />
+                    Open Link
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
