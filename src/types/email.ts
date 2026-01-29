@@ -14,6 +14,7 @@ export interface Email {
   date: string;
   hasListUnsubscribe: boolean;
   unsubscribeLink?: string;
+  folder?: 'spam' | 'trash';
   spamConfidence?: SpamConfidence;
   aiReasoning?: string;
   unsubscribeMethod?: UnsubscribeMethod;
