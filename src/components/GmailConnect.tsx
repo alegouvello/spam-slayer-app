@@ -78,17 +78,9 @@ export const GmailConnect = ({ onConnected }: GmailConnectProps) => {
     );
   }
 
+  // Don't show anything when connected - the banner is no longer needed
   if (isConnected) {
-    return (
-      <Card className="border-success/30 bg-success/5 backdrop-blur-sm">
-        <CardContent className="flex items-center gap-3 py-4">
-          <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-          </div>
-          <span className="text-success font-medium">Gmail Connected</span>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
