@@ -35,7 +35,15 @@ serve(async (req) => {
     }
 
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
-    const redirectUri = `${supabaseUrl}/functions/v1/gmail-oauth-callback`;
+
+    // Redirect back to the web app (NOT to a backend URL) to avoid Google OAuth domain restrictions.
+    const { redirectUri } = await req.json().catch(() => ({}));
+    if (!redirectUri) {
+      return new Response(JSON.stringify({ error: 'Missing redirectUri' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const scopes = [
       'https://www.googleapis.com/auth/gmail.readonly',
@@ -49,7 +57,8 @@ serve(async (req) => {
     authUrl.searchParams.set('scope', scopes.join(' '));
     authUrl.searchParams.set('access_type', 'offline');
     authUrl.searchParams.set('prompt', 'consent');
-    authUrl.searchParams.set('state', user.id); // Pass user ID in state
+    // State is optional here; we rely on the app session when exchanging the code.
+    authUrl.searchParams.set('state', crypto.randomUUID());
 
     console.log('Generated Gmail auth URL for user:', user.id);
 
