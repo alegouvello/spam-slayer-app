@@ -126,6 +126,7 @@ export const Dashboard = () => {
     for (const email of spamEmails) {
       try {
         if (email.hasListUnsubscribe) {
+          // Auto-unsubscribe AND delete
           const { data, error } = await supabase.functions.invoke('gmail-unsubscribe', {
             body: { 
               emailId: email.id, 
@@ -142,11 +143,38 @@ export const Dashboard = () => {
           }
           succeeded++;
         } else if (email.unsubscribeLink) {
+          // Open web link for manual unsubscribe, then delete from Gmail
           window.open(email.unsubscribeLink, '_blank');
+          
+          // Also delete from Gmail
+          const { data, error } = await supabase.functions.invoke('gmail-unsubscribe', {
+            body: { 
+              emailId: email.id, 
+              method: 'delete_only',
+              sender: email.sender,
+              subject: email.subject
+            }
+          });
+          
+          if (!error && data?.deleted) {
+            deletedEmailIds.push(email.id);
+          }
           webOpened++;
+          succeeded++;
         } else {
-          // No unsubscribe option, just remove from list
-          deletedEmailIds.push(email.id);
+          // No unsubscribe option - just delete from Gmail
+          const { data, error } = await supabase.functions.invoke('gmail-unsubscribe', {
+            body: { 
+              emailId: email.id, 
+              method: 'delete_only',
+              sender: email.sender,
+              subject: email.subject
+            }
+          });
+          
+          if (!error && data?.deleted) {
+            deletedEmailIds.push(email.id);
+          }
           succeeded++;
         }
       } catch (error) {
@@ -169,7 +197,7 @@ export const Dashboard = () => {
       webLinksOpened: prev.webLinksOpened + webOpened,
     }));
 
-    toast.success(`Cleaned ${succeeded} spam emails${webOpened > 0 ? `, ${webOpened} links opened` : ''}`);
+    toast.success(`Cleaned ${deletedEmailIds.length} spam emails${webOpened > 0 ? `, ${webOpened} unsubscribe links opened` : ''}`);
     setIsProcessing(false);
   };
 
