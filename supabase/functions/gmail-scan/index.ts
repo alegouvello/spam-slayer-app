@@ -86,6 +86,117 @@ function parseListUnsubscribe(header: string | null): { hasHeader: boolean; link
   };
 }
 
+// Helper to fetch ALL messages from a Gmail label with pagination
+async function fetchAllMessagesFromLabel(
+  accessToken: string, 
+  labelId: string, 
+  folder: string
+): Promise<Array<{ id: string; folder: string }>> {
+  const allMessages: Array<{ id: string; folder: string }> = [];
+  let pageToken: string | null = null;
+  
+  do {
+    const url = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
+    url.searchParams.set('labelIds', labelId);
+    url.searchParams.set('maxResults', '500'); // Max allowed by Gmail API
+    if (pageToken) {
+      url.searchParams.set('pageToken', pageToken);
+    }
+    
+    const response = await fetch(url.toString(), {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch ${folder} messages:`, await response.json());
+      break;
+    }
+    
+    const data = await response.json();
+    const messages = (data.messages || []).map((m: any) => ({ id: m.id, folder }));
+    allMessages.push(...messages);
+    
+    pageToken = data.nextPageToken || null;
+    console.log(`Fetched ${messages.length} ${folder} messages, total so far: ${allMessages.length}`);
+  } while (pageToken);
+  
+  return allMessages;
+}
+
+// Helper to fetch message details in batches to avoid rate limits
+async function fetchMessageDetails(
+  accessToken: string,
+  messages: Array<{ id: string; folder: string }>
+): Promise<any[]> {
+  const BATCH_SIZE = 50; // Process in batches to avoid overwhelming the API
+  const results: any[] = [];
+  
+  for (let i = 0; i < messages.length; i += BATCH_SIZE) {
+    const batch = messages.slice(i, i + BATCH_SIZE);
+    console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(messages.length / BATCH_SIZE)}`);
+    
+    const batchResults = await Promise.all(
+      batch.map(async (msg) => {
+        try {
+          const msgResponse = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
+            {
+              headers: { 'Authorization': `Bearer ${accessToken}` },
+            }
+          );
+
+          if (!msgResponse.ok) return null;
+
+          const msgData = await msgResponse.json();
+          const headers = msgData.payload?.headers || [];
+          
+          const getHeader = (name: string) => 
+            headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value;
+
+          const fromHeader = getHeader('From') || '';
+          const senderMatch = fromHeader.match(/^([^<]+)?<?([^>]+@[^>]+)>?$/);
+          const senderName = senderMatch?.[1]?.trim() || senderMatch?.[2] || fromHeader;
+          const senderEmail = senderMatch?.[2] || fromHeader;
+
+          const listUnsubscribe = getHeader('List-Unsubscribe');
+          const { hasHeader, link } = parseListUnsubscribe(listUnsubscribe);
+
+          // Try to find unsubscribe link in body if no header
+          let unsubscribeLink = link;
+          if (!unsubscribeLink && msgData.payload?.body?.data) {
+            try {
+              const body = atob(msgData.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+              const linkMatch = body.match(/https?:\/\/[^\s"<>]+unsubscribe[^\s"<>]*/i);
+              unsubscribeLink = linkMatch?.[0] || null;
+            } catch {
+              // Ignore base64 decode errors
+            }
+          }
+
+          return {
+            id: msg.id,
+            sender: senderName,
+            senderEmail: senderEmail,
+            subject: getHeader('Subject') || '(No subject)',
+            snippet: msgData.snippet || '',
+            date: new Date(parseInt(msgData.internalDate)).toISOString(),
+            hasListUnsubscribe: hasHeader,
+            unsubscribeLink: unsubscribeLink,
+            folder: msg.folder,
+          };
+        } catch (error) {
+          console.error(`Error fetching message ${msg.id}:`, error);
+          return null;
+        }
+      })
+    );
+    
+    results.push(...batchResults.filter(Boolean));
+  }
+  
+  return results;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -137,39 +248,12 @@ serve(async (req) => {
         });
       }
 
-      // Fetch spam folder messages
-      const spamResponse = await fetch(
-        'https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=SPAM&maxResults=30',
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-        }
-      );
-
-      // Fetch trash folder messages
-      const trashResponse = await fetch(
-        'https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=TRASH&maxResults=30',
-        {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-        }
-      );
-
-      if (!spamResponse.ok) {
-        const error = await spamResponse.json();
-        console.error('Gmail API spam list error:', error);
-        return new Response(JSON.stringify({ error: 'Failed to fetch spam emails' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const spamData = await spamResponse.json();
-      const spamMessages = (spamData.messages || []).map((m: any) => ({ ...m, folder: 'spam' }));
+      // Fetch ALL messages from both folders with pagination
+      console.log('Starting to fetch all spam messages...');
+      const spamMessages = await fetchAllMessagesFromLabel(accessToken, 'SPAM', 'spam');
       
-      let trashMessages: any[] = [];
-      if (trashResponse.ok) {
-        const trashData = await trashResponse.json();
-        trashMessages = (trashData.messages || []).map((m: any) => ({ ...m, folder: 'trash' }));
-      }
+      console.log('Starting to fetch all trash messages...');
+      const trashMessages = await fetchAllMessagesFromLabel(accessToken, 'TRASH', 'trash');
 
       // Combine and deduplicate by ID
       const allMessages = [...spamMessages, ...trashMessages];
@@ -177,60 +261,21 @@ serve(async (req) => {
         index === self.findIndex(m => m.id === msg.id)
       );
       
-      console.log(`Found ${spamMessages.length} spam + ${trashMessages.length} trash = ${uniqueMessages.length} unique messages`);
+      console.log(`Found ${spamMessages.length} spam + ${trashMessages.length} trash = ${uniqueMessages.length} unique messages total`);
 
-      // Fetch full message details for each
-      const emails = await Promise.all(
-        uniqueMessages.slice(0, 40).map(async (msg: { id: string; folder: string }) => {
-          const msgResponse = await fetch(
-            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
-            {
-              headers: { 'Authorization': `Bearer ${accessToken}` },
-            }
-          );
+      // Fetch full details for all messages
+      const emails = await fetchMessageDetails(accessToken, uniqueMessages);
 
-          if (!msgResponse.ok) return null;
+      console.log(`Returning ${emails.length} emails with full details`);
 
-          const msgData = await msgResponse.json();
-          const headers = msgData.payload?.headers || [];
-          
-          const getHeader = (name: string) => 
-            headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value;
-
-          const fromHeader = getHeader('From') || '';
-          const senderMatch = fromHeader.match(/^([^<]+)?<?([^>]+@[^>]+)>?$/);
-          const senderName = senderMatch?.[1]?.trim() || senderMatch?.[2] || fromHeader;
-          const senderEmail = senderMatch?.[2] || fromHeader;
-
-          const listUnsubscribe = getHeader('List-Unsubscribe');
-          const { hasHeader, link } = parseListUnsubscribe(listUnsubscribe);
-
-          // Try to find unsubscribe link in body if no header
-          let unsubscribeLink = link;
-          if (!unsubscribeLink && msgData.payload?.body?.data) {
-            const body = atob(msgData.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-            const linkMatch = body.match(/https?:\/\/[^\s"<>]+unsubscribe[^\s"<>]*/i);
-            unsubscribeLink = linkMatch?.[0] || null;
-          }
-
-          return {
-            id: msg.id,
-            sender: senderName,
-            senderEmail: senderEmail,
-            subject: getHeader('Subject') || '(No subject)',
-            snippet: msgData.snippet || '',
-            date: new Date(parseInt(msgData.internalDate)).toISOString(),
-            hasListUnsubscribe: hasHeader,
-            unsubscribeLink: unsubscribeLink,
-            folder: msg.folder,
-          };
-        })
-      );
-
-      const validEmails = emails.filter(Boolean);
-      console.log(`Returning ${validEmails.length} emails with details`);
-
-      return new Response(JSON.stringify({ emails: validEmails }), {
+      return new Response(JSON.stringify({ 
+        emails,
+        stats: {
+          spamCount: spamMessages.length,
+          trashCount: trashMessages.length,
+          totalUnique: uniqueMessages.length
+        }
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
