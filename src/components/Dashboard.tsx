@@ -68,14 +68,24 @@ export const Dashboard = () => {
 
     setIsAnalyzing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-spam', {
-        body: { emails: emails.slice(0, 20) }
-      });
+      // Process all emails in batches of 20
+      const batchSize = 20;
+      const allResults: any[] = [];
+      
+      for (let i = 0; i < emails.length; i += batchSize) {
+        const batch = emails.slice(i, i + batchSize);
+        const { data, error } = await supabase.functions.invoke('analyze-spam', {
+          body: { emails: batch }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+        if (data.results) {
+          allResults.push(...data.results);
+        }
+      }
 
       setEmails(prev => prev.map(email => {
-        const analyzed = data.results?.find((r: any) => r.id === email.id);
+        const analyzed = allResults.find((r: any) => r.id === email.id);
         if (analyzed) {
           return {
             ...email,
@@ -86,7 +96,8 @@ export const Dashboard = () => {
         return email;
       }));
 
-      toast.success('AI analysis complete!');
+      const spamCount = allResults.filter(r => r.spamConfidence === 'definitely_spam' || r.spamConfidence === 'likely_spam').length;
+      toast.success(`Analysis complete! Found ${spamCount} spam emails.`);
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error('Failed to analyze emails. Please try again.');
@@ -94,6 +105,76 @@ export const Dashboard = () => {
       setIsAnalyzing(false);
     }
   };
+
+  const handleCleanAllSpam = async () => {
+    const spamEmails = emails.filter(e => 
+      e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
+    );
+    
+    if (spamEmails.length === 0) {
+      toast.error('No spam emails found. Run AI Analyze first.');
+      return;
+    }
+
+    setIsProcessing(true);
+    let succeeded = 0;
+    let failed = 0;
+    let webOpened = 0;
+    const deletedEmailIds: string[] = [];
+
+    for (const email of spamEmails) {
+      try {
+        if (email.hasListUnsubscribe) {
+          const { data, error } = await supabase.functions.invoke('gmail-unsubscribe', {
+            body: { 
+              emailId: email.id, 
+              method: 'header',
+              sender: email.sender,
+              subject: email.subject
+            }
+          });
+
+          if (error) throw error;
+
+          if (data?.deleted) {
+            deletedEmailIds.push(email.id);
+          }
+          succeeded++;
+        } else if (email.unsubscribeLink) {
+          window.open(email.unsubscribeLink, '_blank');
+          webOpened++;
+        } else {
+          // No unsubscribe option, just remove from list
+          deletedEmailIds.push(email.id);
+          succeeded++;
+        }
+      } catch (error) {
+        console.error('Process error:', error);
+        failed++;
+      }
+    }
+
+    // Remove processed emails from the list
+    if (deletedEmailIds.length > 0) {
+      setEmails(prev => prev.filter(e => !deletedEmailIds.includes(e.id)));
+    }
+
+    setStats(prev => ({
+      ...prev,
+      totalProcessed: prev.totalProcessed + succeeded + failed,
+      successfulUnsubscribes: prev.successfulUnsubscribes + succeeded,
+      failedUnsubscribes: prev.failedUnsubscribes + failed,
+      deletedEmails: prev.deletedEmails + deletedEmailIds.length,
+      webLinksOpened: prev.webLinksOpened + webOpened,
+    }));
+
+    toast.success(`Cleaned ${succeeded} spam emails${webOpened > 0 ? `, ${webOpened} links opened` : ''}`);
+    setIsProcessing(false);
+  };
+
+  const spamCount = emails.filter(e => 
+    e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
+  ).length;
 
   const handleSelectEmail = (emailId: string) => {
     setEmails(prev => prev.map(email => 
@@ -321,8 +402,24 @@ export const Dashboard = () => {
                         {isAnalyzing ? 'Analyzing...' : 'AI Analyze'}
                       </Button>
 
+                      {spamCount > 0 && (
+                        <Button 
+                          variant="destructive"
+                          onClick={handleCleanAllSpam}
+                          disabled={isProcessing}
+                          className="gap-2 rounded-full"
+                        >
+                          {isProcessing ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                          {isProcessing ? 'Cleaning...' : `Clean All Spam (${spamCount})`}
+                        </Button>
+                      )}
+
                       <Button 
-                        variant="default"
+                        variant="outline"
                         onClick={handleProcess} 
                         disabled={isProcessing || selectedCount === 0}
                         className="gap-2 rounded-full"
@@ -332,7 +429,7 @@ export const Dashboard = () => {
                         ) : (
                           <CheckCircle2 className="h-4 w-4" />
                         )}
-                        {isProcessing ? 'Processing...' : `Process (${selectedCount})`}
+                        {isProcessing ? 'Processing...' : `Process Selected (${selectedCount})`}
                       </Button>
                     </>
                   )}
