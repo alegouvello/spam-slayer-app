@@ -11,6 +11,7 @@ const ALLOWED_REDIRECT_URI_PATTERNS = [
   /^http:\/\/localhost:\d+\/gmail\/callback$/,
   /^https:\/\/[a-zA-Z0-9-]+\.lovable\.app\/gmail\/callback$/,
   /^https:\/\/[a-zA-Z0-9-]+-preview--[a-zA-Z0-9-]+\.lovable\.app\/gmail\/callback$/,
+  /^https:\/\/[a-zA-Z0-9-]+\.lovableproject\.com\/gmail\/callback$/,
 ];
 
 function isValidRedirectUri(uri: string): boolean {
