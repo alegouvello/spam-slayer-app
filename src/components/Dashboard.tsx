@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,8 @@ export const Dashboard = () => {
   const [gmailConnected, setGmailConnected] = useState(false);
   const [previewEmail, setPreviewEmail] = useState<Email | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [statsLoaded, setStatsLoaded] = useState(false);
+  const [senderFeedback, setSenderFeedback] = useState<Record<string, boolean>>({});
   const [stats, setStats] = useState<CleanupStats>({
     totalProcessed: 0,
     successfulUnsubscribes: 0,
@@ -44,6 +46,87 @@ export const Dashboard = () => {
     deletedEmails: 0,
     webLinksOpened: 0,
   });
+
+  // Load stats from cleanup history and sender feedback on mount
+  useEffect(() => {
+    if (user) {
+      loadHistoryStats();
+      loadSenderFeedback();
+    }
+  }, [user]);
+
+  const loadHistoryStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cleanup_history')
+        .select('unsubscribe_status, unsubscribe_method, deleted');
+      
+      if (error) throw error;
+
+      const history = data || [];
+      setStats({
+        totalProcessed: history.length,
+        successfulUnsubscribes: history.filter(h => h.unsubscribe_status === 'success').length,
+        failedUnsubscribes: history.filter(h => h.unsubscribe_status === 'failed').length,
+        deletedEmails: history.filter(h => h.deleted === true).length,
+        webLinksOpened: history.filter(h => h.unsubscribe_method === 'web_link').length,
+      });
+      setStatsLoaded(true);
+    } catch (error) {
+      console.error('Failed to load history stats:', error);
+      setStatsLoaded(true);
+    }
+  };
+
+  const loadSenderFeedback = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sender_feedback')
+        .select('sender_email, marked_as_spam');
+      
+      if (error) throw error;
+
+      const feedback: Record<string, boolean> = {};
+      (data || []).forEach(f => {
+        feedback[f.sender_email.toLowerCase()] = f.marked_as_spam;
+      });
+      setSenderFeedback(feedback);
+    } catch (error) {
+      console.error('Failed to load sender feedback:', error);
+    }
+  };
+
+  // Save feedback when user manually marks an email as spam
+  const saveSenderFeedback = async (email: Email, markedAsSpam: boolean) => {
+    try {
+      const senderEmail = email.senderEmail.toLowerCase();
+      
+      // Upsert feedback
+      const { error } = await supabase
+        .from('sender_feedback')
+        .upsert({
+          user_id: user?.id,
+          sender_email: senderEmail,
+          sender_name: email.sender,
+          marked_as_spam: markedAsSpam,
+          feedback_count: 1,
+        }, {
+          onConflict: 'user_id,sender_email',
+        });
+
+      if (error) throw error;
+
+      // Update local state
+      setSenderFeedback(prev => ({
+        ...prev,
+        [senderEmail]: markedAsSpam,
+      }));
+
+      toast.success(`Learned: ${email.sender} is ${markedAsSpam ? 'spam' : 'not spam'}`);
+    } catch (error) {
+      console.error('Failed to save sender feedback:', error);
+    }
+  };
 
   // Filter emails based on folder selection
   const filteredEmails = emails.filter(email => {
@@ -63,8 +146,23 @@ export const Dashboard = () => {
 
       if (error) throw error;
 
-      setEmails(data.emails || []);
-      toast.success(`Found ${data.emails?.length || 0} emails in your spam folder`);
+      // Apply learned sender feedback to pre-flag known spammers
+      const emailsWithFeedback = (data.emails || []).map((email: Email) => {
+        const senderEmail = email.senderEmail?.toLowerCase();
+        if (senderEmail && senderFeedback[senderEmail] === true) {
+          return {
+            ...email,
+            spamConfidence: 'definitely_spam' as const,
+            aiReasoning: 'Previously marked as spam by you',
+          };
+        }
+        return email;
+      });
+
+      setEmails(emailsWithFeedback);
+      
+      const preMarked = emailsWithFeedback.filter((e: Email) => e.spamConfidence).length;
+      toast.success(`Found ${emailsWithFeedback.length} emails${preMarked > 0 ? ` (${preMarked} already flagged from your history)` : ''}`);
     } catch (error) {
       console.error('Scan error:', error);
       toast.error('Failed to scan spam folder. Please try again.');
@@ -218,8 +316,18 @@ export const Dashboard = () => {
   ).length;
 
   const handleSelectEmail = (emailId: string) => {
-    setEmails(prev => prev.map(email => 
-      email.id === emailId ? { ...email, selected: !email.selected } : email
+    const email = emails.find(e => e.id === emailId);
+    if (!email) return;
+
+    const isSelecting = !email.selected;
+    
+    // If selecting an email that wasn't flagged as spam by AI, learn from it
+    if (isSelecting && email.spamConfidence !== 'definitely_spam' && email.spamConfidence !== 'likely_spam') {
+      saveSenderFeedback(email, true); // User is marking it as spam
+    }
+
+    setEmails(prev => prev.map(e => 
+      e.id === emailId ? { ...e, selected: !e.selected } : e
     ));
   };
 

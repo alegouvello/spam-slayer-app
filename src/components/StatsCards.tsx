@@ -12,6 +12,15 @@ interface StatsCardsProps {
 }
 
 export const StatsCards = ({ stats }: StatsCardsProps) => {
+  // Don't show stats if nothing has been processed yet
+  const hasActivity = stats.totalProcessed > 0 || stats.successfulUnsubscribes > 0 || 
+                      stats.failedUnsubscribes > 0 || stats.deletedEmails > 0 || 
+                      stats.webLinksOpened > 0;
+  
+  if (!hasActivity) {
+    return null;
+  }
+
   const cards = [
     {
       title: 'Processed',
