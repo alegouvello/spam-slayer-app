@@ -11,7 +11,9 @@ import {
   CheckCircle2, 
   XCircle, 
   AlertTriangle,
-  Info
+  Info,
+  Eye,
+  X
 } from 'lucide-react';
 import {
   Tooltip,
@@ -23,9 +25,11 @@ interface EmailListProps {
   emails: Email[];
   onSelect: (emailId: string) => void;
   onSelectAll: () => void;
+  onPreview: (email: Email) => void;
+  onRemove: (emailId: string) => void;
 }
 
-export const EmailList = ({ emails, onSelect, onSelectAll }: EmailListProps) => {
+export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }: EmailListProps) => {
   const allSelected = emails.length > 0 && emails.every(e => e.selected);
 
   const getConfidenceBadge = (confidence?: string) => {
@@ -81,7 +85,10 @@ export const EmailList = ({ emails, onSelect, onSelectAll }: EmailListProps) => 
                     onCheckedChange={() => onSelect(email.id)}
                     className="mt-1"
                   />
-                  <div className="flex-1 min-w-0">
+                  <div 
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => onPreview(email)}
+                  >
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="font-medium truncate">{email.sender}</span>
                       {email.hasListUnsubscribe && (
@@ -124,6 +131,40 @@ export const EmailList = ({ emails, onSelect, onSelectAll }: EmailListProps) => 
                         AI: "{email.aiReasoning}"
                       </p>
                     )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPreview(email);
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Preview email</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemove(email.id);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Remove from list</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </div>

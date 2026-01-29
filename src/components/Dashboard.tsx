@@ -15,6 +15,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { EmailList } from './EmailList';
+import { EmailPreviewDialog } from './EmailPreviewDialog';
 import { ScheduleSettings } from './ScheduleSettings';
 import { StatsCards } from './StatsCards';
 import { GmailConnect } from './GmailConnect';
@@ -29,6 +30,8 @@ export const Dashboard = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [previewEmail, setPreviewEmail] = useState<Email | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [stats, setStats] = useState<CleanupStats>({
     totalProcessed: 0,
     successfulUnsubscribes: 0,
@@ -179,6 +182,56 @@ export const Dashboard = () => {
     setIsProcessing(false);
   };
 
+  const handlePreviewEmail = (email: Email) => {
+    setPreviewEmail(email);
+    setPreviewOpen(true);
+  };
+
+  const handleRemoveEmail = (emailId: string) => {
+    setEmails(prev => prev.filter(e => e.id !== emailId));
+    toast.success('Email removed from list');
+  };
+
+  const handleUnsubscribeFromPreview = async (email: Email) => {
+    if (email.hasListUnsubscribe) {
+      try {
+        const { data, error } = await supabase.functions.invoke('gmail-unsubscribe', {
+          body: { 
+            emailId: email.id, 
+            method: 'header',
+            sender: email.sender,
+            subject: email.subject
+          }
+        });
+
+        if (error) throw error;
+
+        if (data?.deleted) {
+          setEmails(prev => prev.filter(e => e.id !== email.id));
+          setStats(prev => ({
+            ...prev,
+            totalProcessed: prev.totalProcessed + 1,
+            successfulUnsubscribes: prev.successfulUnsubscribes + 1,
+            deletedEmails: prev.deletedEmails + 1,
+          }));
+        }
+        toast.success(`Unsubscribed from ${email.sender}`);
+      } catch (error) {
+        console.error('Unsubscribe error:', error);
+        toast.error('Failed to unsubscribe');
+      }
+    } else if (email.unsubscribeLink) {
+      window.open(email.unsubscribeLink, '_blank');
+      setEmails(prev => prev.map(e => 
+        e.id === email.id ? { ...e, unsubscribeStatus: 'opened_link' } : e
+      ));
+      setStats(prev => ({
+        ...prev,
+        webLinksOpened: prev.webLinksOpened + 1,
+      }));
+    }
+  };
+
   const selectedCount = emails.filter(e => e.selected).length;
 
   return (
@@ -292,8 +345,19 @@ export const Dashboard = () => {
                 emails={emails}
                 onSelect={handleSelectEmail}
                 onSelectAll={handleSelectAll}
+                onPreview={handlePreviewEmail}
+                onRemove={handleRemoveEmail}
               />
             )}
+
+            {/* Email Preview Dialog */}
+            <EmailPreviewDialog
+              email={previewEmail}
+              open={previewOpen}
+              onOpenChange={setPreviewOpen}
+              onRemove={handleRemoveEmail}
+              onUnsubscribe={handleUnsubscribeFromPreview}
+            />
           </TabsContent>
 
           <TabsContent value="schedule">
