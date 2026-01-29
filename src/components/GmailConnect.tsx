@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Mail, CheckCircle2, ExternalLink, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -67,9 +67,12 @@ export const GmailConnect = ({ onConnected }: GmailConnectProps) => {
 
   if (isChecking) {
     return (
-      <Card>
+      <Card className="border bg-background/60 backdrop-blur-sm border-border/50">
         <CardContent className="flex items-center justify-center py-8">
-          <div className="animate-pulse text-muted-foreground">Checking Gmail connection...</div>
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <span>Checking Gmail connection...</span>
+          </div>
         </CardContent>
       </Card>
     );
@@ -77,43 +80,52 @@ export const GmailConnect = ({ onConnected }: GmailConnectProps) => {
 
   if (isConnected) {
     return (
-      <Card className="border-green-500/50 bg-green-500/5">
+      <Card className="border-success/30 bg-success/5 backdrop-blur-sm">
         <CardContent className="flex items-center gap-3 py-4">
-          <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="text-green-700 dark:text-green-400 font-medium">Gmail Connected</span>
+          <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
+            <CheckCircle2 className="h-4 w-4 text-success" />
+          </div>
+          <span className="text-success font-medium">Gmail Connected</span>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Connect Gmail
+    <Card className="border bg-background/60 backdrop-blur-sm border-border/50 overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <CardHeader className="relative">
+        <CardTitle className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+            <Mail className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <span className="block">Connect Gmail</span>
+            <span className="text-xs font-normal text-muted-foreground">Get started in seconds</span>
+          </div>
         </CardTitle>
-        <CardDescription>
-          Connect your Gmail account to scan and clean up your spam folder
-        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative">
         <Button 
           onClick={handleConnect} 
           disabled={isConnecting}
-          className="gap-2"
+          className="gap-2 rounded-full"
+          size="lg"
         >
           {isConnecting ? (
-            <>Connecting...</>
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Connecting...
+            </>
           ) : (
             <>
-              <ExternalLink className="h-4 w-4" />
+              <Sparkles className="h-4 w-4" />
               Connect Gmail Account
             </>
           )}
         </Button>
-        <p className="text-xs text-muted-foreground mt-3">
-          We'll request permission to read and modify your spam folder only.
+        <p className="text-xs text-muted-foreground mt-4">
+          We'll only access your spam folder — nothing else.
         </p>
       </CardContent>
     </Card>

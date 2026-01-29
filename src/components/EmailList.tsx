@@ -59,27 +59,30 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
   };
 
   return (
-    <Card className="border-0 elegant-shadow">
+    <Card className="border bg-background/60 backdrop-blur-sm border-border/50">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
-          <Mail className="h-5 w-5 text-muted-foreground" />
-          Emails ({emails.length})
+        <CardTitle className="text-lg font-medium flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Mail className="h-4 w-4 text-primary" />
+          </div>
+          <span>Emails ({emails.length})</span>
         </CardTitle>
-        <Button variant="ghost" size="sm" onClick={onSelectAll} className="text-xs">
+        <Button variant="ghost" size="sm" onClick={onSelectAll} className="text-xs hover:bg-primary/10">
           {allSelected ? 'Deselect All' : 'Select All'}
         </Button>
       </CardHeader>
       <CardContent className="pt-0">
         <ScrollArea className="h-[480px]">
           <div className="space-y-2">
-            {emails.map((email) => (
+            {emails.map((email, index) => (
               <div 
                 key={email.id}
-                className={`p-4 rounded-lg border transition-all ${
+                className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
                   email.selected 
-                    ? 'bg-accent/50 border-primary/20' 
-                    : 'bg-background hover:bg-muted/30 border-transparent'
+                    ? 'bg-primary/5 border-primary/30 shadow-sm' 
+                    : 'bg-background/80 hover:bg-background border-transparent hover:border-border/50'
                 }`}
+                style={{ animationDelay: `${index * 30}ms` }}
               >
                 <div className="flex items-start gap-3">
                   <Checkbox 
@@ -96,7 +99,7 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                       {email.hasListUnsubscribe && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge variant="outline" className="gap-1 text-xs font-normal text-primary border-primary/30">
+                            <Badge variant="outline" className="gap-1 text-xs font-normal text-primary border-primary/30 bg-primary/5">
                               <Zap className="h-3 w-3" /> Auto
                             </Badge>
                           </TooltipTrigger>
@@ -129,8 +132,8 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                       {getStatusBadge(email.unsubscribeStatus)}
                     </div>
                     {email.aiReasoning && (
-                      <p className="text-xs text-muted-foreground mt-2 italic line-clamp-1">
-                        "{email.aiReasoning}"
+                      <p className="text-xs text-muted-foreground mt-2 italic line-clamp-1 bg-accent/30 rounded-lg px-2 py-1">
+                        ✨ "{email.aiReasoning}"
                       </p>
                     )}
                   </div>
@@ -140,7 +143,7 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             onPreview(email);
@@ -156,7 +159,7 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             onRemove(email.id);

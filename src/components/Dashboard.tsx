@@ -23,6 +23,7 @@ import { GmailConnect } from './GmailConnect';
 import { Email, CleanupStats } from '@/types/email';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import dashboardBg from '@/assets/dashboard-bg.jpg';
 
 export const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -312,25 +313,34 @@ export const Dashboard = () => {
   const selectedCount = emails.filter(e => e.selected).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center opacity-40 -z-10"
+        style={{ backgroundImage: `url(${dashboardBg})` }}
+      />
+      <div className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background -z-10" />
+
       {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b bg-background/60 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Mail className="h-4 w-4 text-primary" />
+            </div>
             <span className="font-medium">Spam Cleanup</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-8 w-8 ring-2 ring-background">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="text-xs">
+                <AvatarFallback className="text-xs bg-primary/10 text-primary">
                   {user?.email?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm text-muted-foreground hidden md:inline">{user?.email}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground transition-colors">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -338,10 +348,11 @@ export const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-10 max-w-5xl">
+      <main className="container mx-auto px-6 py-10 max-w-5xl animate-fade-in">
         <div className="mb-10">
-          <h1 className="text-2xl font-medium mb-1">Welcome back</h1>
-          <p className="text-muted-foreground">Manage your spam and subscriptions</p>
+          <p className="text-sm font-medium text-primary mb-2 tracking-wide uppercase">Dashboard</p>
+          <h1 className="text-3xl font-medium mb-2">Welcome back</h1>
+          <p className="text-muted-foreground">Manage your spam and subscriptions with ease</p>
         </div>
 
         <Tabs defaultValue="cleanup" className="space-y-8">

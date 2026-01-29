@@ -18,7 +18,8 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
       value: stats.totalProcessed,
       icon: Trash2,
       color: 'text-primary',
-      bgColor: 'bg-accent',
+      bgColor: 'bg-primary/10',
+      borderColor: 'border-primary/20',
     },
     {
       title: 'Unsubscribed',
@@ -26,6 +27,7 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
       icon: CheckCircle2,
       color: 'text-success',
       bgColor: 'bg-success/10',
+      borderColor: 'border-success/20',
     },
     {
       title: 'Failed',
@@ -33,6 +35,7 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
       icon: XCircle,
       color: 'text-destructive',
       bgColor: 'bg-destructive/10',
+      borderColor: 'border-destructive/20',
     },
     {
       title: 'Links Opened',
@@ -40,21 +43,26 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
       icon: ExternalLink,
       color: 'text-warning',
       bgColor: 'bg-warning/10',
+      borderColor: 'border-warning/20',
     },
   ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {cards.map((card) => (
-        <Card key={card.title} className="border-0 elegant-shadow">
+      {cards.map((card, index) => (
+        <Card 
+          key={card.title} 
+          className={`border bg-background/60 backdrop-blur-sm ${card.borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
+          style={{ animationDelay: `${index * 100}ms` }}
+        >
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`p-2 rounded-full ${card.bgColor}`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-2.5 rounded-xl ${card.bgColor}`}>
                 <card.icon className={`h-4 w-4 ${card.color}`} />
               </div>
             </div>
-            <p className="text-2xl font-medium mb-1">{card.value}</p>
-            <p className="text-xs text-muted-foreground">{card.title}</p>
+            <p className="text-3xl font-medium mb-1">{card.value}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">{card.title}</p>
           </CardContent>
         </Card>
       ))}
