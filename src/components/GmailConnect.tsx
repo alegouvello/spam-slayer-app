@@ -48,7 +48,10 @@ export const GmailConnect = ({ onConnected }: GmailConnectProps) => {
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('gmail-auth-url');
+      const redirectUri = `${window.location.origin}/gmail/callback`;
+      const { data, error } = await supabase.functions.invoke('gmail-auth-url', {
+        body: { redirectUri },
+      });
 
       if (error) throw error;
 
