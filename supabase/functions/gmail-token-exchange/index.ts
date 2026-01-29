@@ -7,6 +7,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// Allowlist of valid redirect URIs for OAuth flow
+const ALLOWED_REDIRECT_URI_PATTERNS = [
+  /^http:\/\/localhost:\d+\/gmail\/callback$/,
+  /^https:\/\/[a-zA-Z0-9-]+\.lovable\.app\/gmail\/callback$/,
+  /^https:\/\/[a-zA-Z0-9-]+-preview--[a-zA-Z0-9-]+\.lovable\.app\/gmail\/callback$/,
+];
+
+function isValidRedirectUri(uri: string): boolean {
+  try {
+    const url = new URL(uri);
+    return ALLOWED_REDIRECT_URI_PATTERNS.some(pattern => pattern.test(uri));
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,6 +41,14 @@ serve(async (req) => {
     const { code, redirectUri } = await req.json();
     if (!code || !redirectUri) {
       return new Response(JSON.stringify({ error: 'Missing code or redirectUri' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate redirectUri against allowlist
+    if (!isValidRedirectUri(redirectUri)) {
+      return new Response(JSON.stringify({ error: 'Invalid redirect URI' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -65,7 +89,7 @@ serve(async (req) => {
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', tokens);
       return new Response(JSON.stringify({
-        error: tokens.error_description || tokens.error || 'Token exchange failed',
+        error: 'Token exchange failed',
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -105,7 +129,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Token exchange error:', error);
     return new Response(JSON.stringify({
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: 'An error occurred',
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
