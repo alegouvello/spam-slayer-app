@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.analyze-spam]
 verify_jwt = false
+
+[functions.gmail-auth-url]
+verify_jwt = false
+
+[functions.gmail-oauth-callback]
+verify_jwt = false
