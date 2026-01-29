@@ -3,17 +3,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { 
   Users, 
   Trash2, 
   ShieldCheck, 
   ShieldX,
   RefreshCw,
-  Mail
+  Mail,
+  Plus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
+import { z } from 'zod';
 interface SenderFeedback {
   id: string;
   sender_email: string;
@@ -24,10 +36,19 @@ interface SenderFeedback {
   updated_at: string;
 }
 
+const senderSchema = z.object({
+  email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
+  name: z.string().trim().max(100).optional(),
+});
+
 export const SpamSendersList = () => {
   const [senders, setSenders] = useState<SenderFeedback[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newSenderEmail, setNewSenderEmail] = useState('');
+  const [newSenderName, setNewSenderName] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   useEffect(() => {
     loadSenders();
   }, []);
@@ -87,6 +108,61 @@ export const SpamSendersList = () => {
     }
   };
 
+  const handleAddSender = async () => {
+    setValidationError(null);
+    
+    const result = senderSchema.safeParse({
+      email: newSenderEmail,
+      name: newSenderName || undefined,
+    });
+    
+    if (!result.success) {
+      setValidationError(result.error.errors[0].message);
+      return;
+    }
+
+    // Check if sender already exists
+    const existingSender = senders.find(
+      s => s.sender_email.toLowerCase() === newSenderEmail.toLowerCase().trim()
+    );
+    
+    if (existingSender) {
+      setValidationError('This sender is already in your list');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('sender_feedback')
+        .insert({
+          user_id: user.id,
+          sender_email: newSenderEmail.trim().toLowerCase(),
+          sender_name: newSenderName.trim() || null,
+          marked_as_spam: true,
+          feedback_count: 1,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setSenders(prev => [data, ...prev]);
+      setNewSenderEmail('');
+      setNewSenderName('');
+      setIsAddDialogOpen(false);
+      toast.success(`Added ${newSenderName || newSenderEmail} to spam list`);
+    } catch (error) {
+      console.error('Failed to add sender:', error);
+      toast.error('Failed to add sender');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   const spamCount = senders.filter(s => s.marked_as_spam).length;
   const safeCount = senders.filter(s => !s.marked_as_spam).length;
 
@@ -117,9 +193,85 @@ export const SpamSendersList = () => {
               </CardDescription>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={loadSenders} className="rounded-xl">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+              setIsAddDialogOpen(open);
+              if (!open) {
+                setNewSenderEmail('');
+                setNewSenderName('');
+                setValidationError(null);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-xl gap-1.5">
+                  <Plus className="h-4 w-4" />
+                  Add Sender
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add Spam Sender</DialogTitle>
+                  <DialogDescription>
+                    Manually add an email address to your spam list. The AI will learn to flag emails from this sender.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="sender-email">Email Address *</Label>
+                    <Input
+                      id="sender-email"
+                      type="email"
+                      placeholder="spam@example.com"
+                      value={newSenderEmail}
+                      onChange={(e) => {
+                        setNewSenderEmail(e.target.value);
+                        setValidationError(null);
+                      }}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sender-name">Sender Name (optional)</Label>
+                    <Input
+                      id="sender-name"
+                      type="text"
+                      placeholder="Company Name"
+                      value={newSenderName}
+                      onChange={(e) => setNewSenderName(e.target.value)}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  {validationError && (
+                    <p className="text-sm text-destructive">{validationError}</p>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddDialogOpen(false)}
+                    className="rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddSender}
+                    disabled={isAdding || !newSenderEmail}
+                    className="rounded-xl gap-1.5"
+                  >
+                    {isAdding ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    Add to Spam List
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Button variant="ghost" size="icon" onClick={loadSenders} className="rounded-xl">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         
         {/* Stats */}
