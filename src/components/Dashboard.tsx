@@ -114,20 +114,34 @@ export const Dashboard = () => {
     let succeeded = 0;
     let failed = 0;
     let webOpened = 0;
+    let deleted = 0;
+    const deletedEmailIds: string[] = [];
 
     for (const email of selectedEmails) {
       try {
         if (email.hasListUnsubscribe) {
           // Auto-unsubscribe via header
-          const { error } = await supabase.functions.invoke('gmail-unsubscribe', {
-            body: { emailId: email.id, method: 'header' }
+          const { data, error } = await supabase.functions.invoke('gmail-unsubscribe', {
+            body: { 
+              emailId: email.id, 
+              method: 'header',
+              sender: email.sender,
+              subject: email.subject
+            }
           });
 
           if (error) throw error;
 
-          setEmails(prev => prev.map(e => 
-            e.id === email.id ? { ...e, unsubscribeStatus: 'success' } : e
-          ));
+          if (data?.deleted) {
+            // Email was deleted from Gmail - remove from list
+            deletedEmailIds.push(email.id);
+            deleted++;
+          } else {
+            // Unsubscribed but not deleted - update status
+            setEmails(prev => prev.map(e => 
+              e.id === email.id ? { ...e, unsubscribeStatus: 'success' } : e
+            ));
+          }
           succeeded++;
           toast.success(`Unsubscribed from ${email.sender}`);
         } else if (email.unsubscribeLink) {
@@ -148,11 +162,17 @@ export const Dashboard = () => {
       }
     }
 
+    // Remove deleted emails from the list
+    if (deletedEmailIds.length > 0) {
+      setEmails(prev => prev.filter(e => !deletedEmailIds.includes(e.id)));
+    }
+
     setStats(prev => ({
       ...prev,
       totalProcessed: prev.totalProcessed + processed,
       successfulUnsubscribes: prev.successfulUnsubscribes + succeeded,
       failedUnsubscribes: prev.failedUnsubscribes + failed,
+      deletedEmails: prev.deletedEmails + deleted,
       webLinksOpened: prev.webLinksOpened + webOpened,
     }));
 
