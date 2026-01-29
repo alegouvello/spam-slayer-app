@@ -1,14 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encrypt, decrypt } from "../_shared/crypto.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-async function refreshAccessToken(supabase: any, userId: string, refreshToken: string): Promise<string | null> {
+async function refreshAccessToken(supabase: any, userId: string, encryptedRefreshToken: string): Promise<string | null> {
   const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
   const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
+
+  // Decrypt the refresh token
+  const refreshToken = await decrypt(encryptedRefreshToken);
 
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -28,8 +32,12 @@ async function refreshAccessToken(supabase: any, userId: string, refreshToken: s
   }
 
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+  
+  // Encrypt the new access token before storing
+  const encryptedAccessToken = await encrypt(tokens.access_token);
+  
   await supabase.from('profiles').update({
-    gmail_access_token: tokens.access_token,
+    gmail_access_token: encryptedAccessToken,
     gmail_token_expires_at: expiresAt,
   }).eq('user_id', userId);
 
@@ -56,7 +64,13 @@ async function getValidAccessToken(supabase: any, userId: string): Promise<strin
     return null;
   }
 
-  return profile.gmail_access_token;
+  // Decrypt the access token before using
+  try {
+    return await decrypt(profile.gmail_access_token);
+  } catch (error) {
+    console.error('Failed to decrypt access token:', error);
+    return null;
+  }
 }
 
 function parseListUnsubscribe(header: string | null): { hasHeader: boolean; link: string | null } {

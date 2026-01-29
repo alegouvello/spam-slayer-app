@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encrypt } from "../_shared/crypto.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,12 +74,17 @@ serve(async (req) => {
 
     const expiresAt = new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString();
 
+    // Encrypt tokens before storing
+    const encryptedAccessToken = await encrypt(tokens.access_token);
+    const encryptedRefreshToken = tokens.refresh_token 
+      ? await encrypt(tokens.refresh_token) 
+      : undefined;
+
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        gmail_access_token: tokens.access_token,
-        // refresh_token might be absent if the user previously consented; keep existing if so
-        gmail_refresh_token: tokens.refresh_token ?? undefined,
+        gmail_access_token: encryptedAccessToken,
+        gmail_refresh_token: encryptedRefreshToken,
         gmail_token_expires_at: expiresAt,
       })
       .eq('user_id', user.id);
@@ -91,7 +97,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Gmail tokens stored successfully for user:', user.id);
+    console.log('Gmail tokens encrypted and stored successfully for user:', user.id);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
