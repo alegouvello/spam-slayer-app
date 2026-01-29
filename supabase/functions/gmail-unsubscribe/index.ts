@@ -165,6 +165,32 @@ serve(async (req) => {
       });
     }
 
+    if (method === 'delete_only') {
+      // Just delete the email without unsubscribing
+      console.log(`Delete-only processed for email ${emailId}`);
+      
+      const deleted = await deleteEmailFromGmail(accessToken, emailId);
+      
+      // Log to cleanup history
+      await supabase.from('cleanup_history').insert({
+        user_id: user.id,
+        email_id: emailId,
+        sender: sender || null,
+        subject: subject || null,
+        unsubscribe_method: 'delete_only',
+        unsubscribe_status: deleted ? 'success' : 'failed',
+        deleted: deleted,
+      });
+
+      return new Response(JSON.stringify({ 
+        success: deleted, 
+        deleted: deleted,
+        message: deleted ? 'Successfully deleted email' : 'Failed to delete email'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ error: 'Invalid method' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
