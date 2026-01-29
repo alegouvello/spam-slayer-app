@@ -6,11 +6,73 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Note: Gmail API integration requires OAuth tokens stored in the user's profile
-// For this demo, we'll simulate the Gmail API response structure
+async function refreshAccessToken(supabase: any, userId: string, refreshToken: string): Promise<string | null> {
+  const clientId = Deno.env.get('GOOGLE_CLIENT_ID')!;
+  const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')!;
+
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  });
+
+  const tokens = await response.json();
+  if (!response.ok) {
+    console.error('Token refresh failed:', tokens);
+    return null;
+  }
+
+  const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+  await supabase.from('profiles').update({
+    gmail_access_token: tokens.access_token,
+    gmail_token_expires_at: expiresAt,
+  }).eq('user_id', userId);
+
+  return tokens.access_token;
+}
+
+async function getValidAccessToken(supabase: any, userId: string): Promise<string | null> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('gmail_access_token, gmail_refresh_token, gmail_token_expires_at')
+    .eq('user_id', userId)
+    .single();
+
+  if (!profile?.gmail_access_token) {
+    return null;
+  }
+
+  // Check if token is expired (with 5 min buffer)
+  const expiresAt = new Date(profile.gmail_token_expires_at);
+  if (expiresAt.getTime() - Date.now() < 5 * 60 * 1000) {
+    if (profile.gmail_refresh_token) {
+      return await refreshAccessToken(supabase, userId, profile.gmail_refresh_token);
+    }
+    return null;
+  }
+
+  return profile.gmail_access_token;
+}
+
+function parseListUnsubscribe(header: string | null): { hasHeader: boolean; link: string | null } {
+  if (!header) return { hasHeader: false, link: null };
+  
+  // Extract mailto: or https: links from List-Unsubscribe header
+  const httpsMatch = header.match(/<(https?:\/\/[^>]+)>/);
+  const mailtoMatch = header.match(/<mailto:([^>]+)>/);
+  
+  return {
+    hasHeader: true,
+    link: httpsMatch?.[1] || null,
+  };
+}
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -18,24 +80,20 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('No authorization header provided');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      console.error('Auth error:', authError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -45,79 +103,98 @@ serve(async (req) => {
     const { action } = await req.json();
     console.log(`Processing action: ${action} for user: ${user.id}`);
 
+    if (action === 'check_connection') {
+      const accessToken = await getValidAccessToken(supabase, user.id);
+      return new Response(JSON.stringify({ connected: !!accessToken }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (action === 'scan') {
-      // In production, this would:
-      // 1. Get the user's Gmail OAuth tokens from profiles table
-      // 2. Use Gmail API to fetch spam folder emails
-      // 3. Parse List-Unsubscribe headers and content for unsubscribe links
+      const accessToken = await getValidAccessToken(supabase, user.id);
       
-      // For demo purposes, return sample data that shows the app structure
-      const sampleEmails = [
-        {
-          id: 'msg_001',
-          sender: 'Newsletter Weekly',
-          senderEmail: 'news@newsletter-weekly.com',
-          subject: '🎉 This Week\'s Top Stories You Can\'t Miss!',
-          snippet: 'Don\'t miss out on the latest news and updates from around the world...',
-          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          hasListUnsubscribe: true,
-          unsubscribeLink: 'https://example.com/unsubscribe/1',
-        },
-        {
-          id: 'msg_002',
-          sender: 'Promo Deals',
-          senderEmail: 'deals@promo-deals.net',
-          subject: 'EXCLUSIVE: 90% OFF Everything Today Only!!!',
-          snippet: 'Limited time offer! Shop now and save big on all items...',
-          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          hasListUnsubscribe: true,
-          unsubscribeLink: null,
-        },
-        {
-          id: 'msg_003',
-          sender: 'Tech Updates',
-          senderEmail: 'updates@techblog.io',
-          subject: 'New JavaScript Framework Released - Breaking Changes',
-          snippet: 'A new JavaScript framework has been released with major improvements...',
-          date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          hasListUnsubscribe: false,
-          unsubscribeLink: 'https://example.com/unsubscribe/3',
-        },
-        {
-          id: 'msg_004',
-          sender: 'Crypto Alerts',
-          senderEmail: 'alerts@crypto-gains.xyz',
-          subject: '🚀 Make $10,000 Daily with This ONE Simple Trick',
-          snippet: 'Learn how ordinary people are making thousands daily...',
-          date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-          hasListUnsubscribe: true,
-          unsubscribeLink: 'https://example.com/unsubscribe/4',
-        },
-        {
-          id: 'msg_005',
-          sender: 'Your Bank',
-          senderEmail: 'security@your-bank-verify.com',
-          subject: 'URGENT: Verify Your Account Immediately',
-          snippet: 'Your account has been compromised. Click here to verify...',
-          date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          hasListUnsubscribe: false,
-          unsubscribeLink: null,
-        },
-        {
-          id: 'msg_006',
-          sender: 'Fashion Weekly',
-          senderEmail: 'style@fashion-weekly.com',
-          subject: 'Spring Collection Preview - VIP Early Access',
-          snippet: 'Be the first to see our stunning new spring collection...',
-          date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-          hasListUnsubscribe: true,
-          unsubscribeLink: 'https://example.com/unsubscribe/6',
-        },
-      ];
+      if (!accessToken) {
+        return new Response(JSON.stringify({ 
+          error: 'Gmail not connected',
+          needsAuth: true 
+        }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
-      console.log(`Returning ${sampleEmails.length} sample emails`);
+      // Fetch spam folder messages
+      const listResponse = await fetch(
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages?labelIds=SPAM&maxResults=50',
+        {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        }
+      );
 
-      return new Response(JSON.stringify({ emails: sampleEmails }), {
+      if (!listResponse.ok) {
+        const error = await listResponse.json();
+        console.error('Gmail API list error:', error);
+        return new Response(JSON.stringify({ error: 'Failed to fetch emails' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const listData = await listResponse.json();
+      const messages = listData.messages || [];
+      console.log(`Found ${messages.length} messages in spam folder`);
+
+      // Fetch full message details for each
+      const emails = await Promise.all(
+        messages.slice(0, 30).map(async (msg: { id: string }) => {
+          const msgResponse = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
+            {
+              headers: { 'Authorization': `Bearer ${accessToken}` },
+            }
+          );
+
+          if (!msgResponse.ok) return null;
+
+          const msgData = await msgResponse.json();
+          const headers = msgData.payload?.headers || [];
+          
+          const getHeader = (name: string) => 
+            headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value;
+
+          const fromHeader = getHeader('From') || '';
+          const senderMatch = fromHeader.match(/^([^<]+)?<?([^>]+@[^>]+)>?$/);
+          const senderName = senderMatch?.[1]?.trim() || senderMatch?.[2] || fromHeader;
+          const senderEmail = senderMatch?.[2] || fromHeader;
+
+          const listUnsubscribe = getHeader('List-Unsubscribe');
+          const { hasHeader, link } = parseListUnsubscribe(listUnsubscribe);
+
+          // Try to find unsubscribe link in body if no header
+          let unsubscribeLink = link;
+          if (!unsubscribeLink && msgData.payload?.body?.data) {
+            const body = atob(msgData.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+            const linkMatch = body.match(/https?:\/\/[^\s"<>]+unsubscribe[^\s"<>]*/i);
+            unsubscribeLink = linkMatch?.[0] || null;
+          }
+
+          return {
+            id: msg.id,
+            sender: senderName,
+            senderEmail: senderEmail,
+            subject: getHeader('Subject') || '(No subject)',
+            snippet: msgData.snippet || '',
+            date: new Date(parseInt(msgData.internalDate)).toISOString(),
+            hasListUnsubscribe: hasHeader,
+            unsubscribeLink: unsubscribeLink,
+          };
+        })
+      );
+
+      const validEmails = emails.filter(Boolean);
+      console.log(`Returning ${validEmails.length} emails with details`);
+
+      return new Response(JSON.stringify({ emails: validEmails }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

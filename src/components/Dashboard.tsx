@@ -12,12 +12,12 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Clock,
-  Settings,
   RefreshCw
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { ScheduleSettings } from './ScheduleSettings';
 import { StatsCards } from './StatsCards';
+import { GmailConnect } from './GmailConnect';
 import { Email, CleanupStats } from '@/types/email';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,7 @@ export const Dashboard = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState(false);
   const [stats, setStats] = useState<CleanupStats>({
     totalProcessed: 0,
     successfulUnsubscribes: 0,
@@ -201,6 +202,9 @@ export const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="cleanup" className="space-y-6">
+            {/* Gmail Connection */}
+            <GmailConnect onConnected={() => setGmailConnected(true)} />
+
             {/* Stats */}
             <StatsCards stats={stats} />
 
