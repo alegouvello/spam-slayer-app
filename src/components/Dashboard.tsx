@@ -464,34 +464,44 @@ export const Dashboard = () => {
   const selectedCount = filteredEmails.filter(e => e.selected).length;
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Image */}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Beautiful Background */}
       <div 
-        className="fixed inset-0 bg-cover bg-center opacity-40 -z-10"
+        className="fixed inset-0 bg-cover bg-center -z-20"
         style={{ backgroundImage: `url(${dashboardBg})` }}
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background -z-10" />
+      
+      {/* Gradient Overlay for readability */}
+      <div className="fixed inset-0 bg-gradient-to-br from-background/70 via-background/50 to-background/80 -z-10" />
+      
+      {/* Decorative floating orbs */}
+      <div className="fixed top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse -z-10" />
+      <div className="fixed bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse -z-10" style={{ animationDelay: '1s' }} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-primary/10 to-success/10 rounded-full blur-3xl -z-10" />
 
       {/* Header */}
-      <header className="border-b bg-background/60 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-white/20 bg-white/40 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Mail className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+              <Mail className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-medium">Spam Cleanup</span>
+            <div>
+              <span className="font-semibold text-lg">Spam Slayer</span>
+              <span className="text-xs text-muted-foreground block -mt-0.5">Clean inbox, clear mind</span>
+            </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8 ring-2 ring-background">
+            <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm rounded-full px-4 py-2">
+              <Avatar className="h-8 w-8 ring-2 ring-white shadow-md">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                <AvatarFallback className="text-xs bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-medium">
                   {user?.email?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground hidden md:inline">{user?.email}</span>
+              <span className="text-sm font-medium hidden md:inline">{user?.email}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground transition-colors">
+            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground hover:bg-white/50 transition-all rounded-full">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -499,53 +509,70 @@ export const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-10 max-w-5xl animate-fade-in">
-        <div className="mb-10">
-          <p className="text-sm font-medium text-primary mb-2 tracking-wide uppercase">Dashboard</p>
-          <h1 className="text-3xl font-medium mb-2">Welcome back</h1>
-          <p className="text-muted-foreground">Manage your spam and subscriptions with ease</p>
+      <main className="container mx-auto px-6 py-12 max-w-5xl">
+        {/* Hero Section */}
+        <div className="mb-12 animate-fade-in">
+          <div className="inline-flex items-center gap-2 bg-primary/10 backdrop-blur-sm text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <Sparkles className="h-4 w-4" />
+            AI-Powered Cleanup
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
+            Welcome back
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-md">
+            Take control of your inbox. Scan, analyze, and eliminate spam in seconds.
+          </p>
         </div>
 
         <Tabs defaultValue="cleanup" className="space-y-8">
-          <TabsList className="bg-muted/50 p-1 rounded-full w-fit">
-            <TabsTrigger value="cleanup" className="gap-2 rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+          <TabsList className="bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl w-fit shadow-lg shadow-black/5 border border-white/50">
+            <TabsTrigger value="cleanup" className="gap-2 rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
               <Trash2 className="h-4 w-4" />
               Cleanup
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-2 rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <TabsTrigger value="schedule" className="gap-2 rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
               <Clock className="h-4 w-4" />
               Schedule
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="cleanup" className="space-y-8">
+          <TabsContent value="cleanup" className="space-y-8 animate-fade-in">
             {/* Gmail Connection */}
             <GmailConnect onConnected={() => setGmailConnected(true)} />
 
             {/* Stats */}
             <StatsCards stats={stats} />
 
-            {/* Actions */}
-            <Card className="border-0 elegant-shadow">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-medium">Spam Folder</CardTitle>
-                <CardDescription>
-                  Scan, review, and clean up unwanted emails
-                </CardDescription>
+            {/* Actions Card */}
+            <Card className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-xl shadow-black/5 overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <CardHeader className="pb-4 relative">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Inbox className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-semibold">Spam & Trash</CardTitle>
+                    <CardDescription className="text-sm">
+                      Scan, review, and clean up unwanted emails
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 relative">
                 <div className="flex flex-wrap gap-3">
                   <Button 
                     onClick={handleScanSpam} 
                     disabled={isScanning}
-                    className="gap-2 rounded-full"
+                    size="lg"
+                    className="gap-2 rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
                   >
                     {isScanning ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
                       <Scan className="h-4 w-4" />
                     )}
-                    {isScanning ? 'Scanning...' : 'Scan Spam'}
+                    {isScanning ? 'Scanning...' : 'Scan Emails'}
                   </Button>
 
                   {emails.length > 0 && (
@@ -554,12 +581,13 @@ export const Dashboard = () => {
                         variant="secondary"
                         onClick={handleAnalyze} 
                         disabled={isAnalyzing}
-                        className="gap-2 rounded-full"
+                        size="lg"
+                        className="gap-2 rounded-xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 hover:from-violet-500/20 hover:to-purple-500/20 border border-violet-500/20"
                       >
                         {isAnalyzing ? (
                           <RefreshCw className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Sparkles className="h-4 w-4" />
+                          <Sparkles className="h-4 w-4 text-violet-600" />
                         )}
                         {isAnalyzing ? 'Analyzing...' : 'AI Analyze'}
                       </Button>
@@ -569,7 +597,8 @@ export const Dashboard = () => {
                           variant="destructive"
                           onClick={handleCleanAllSpam}
                           disabled={isProcessing}
-                          className="gap-2 rounded-full"
+                          size="lg"
+                          className="gap-2 rounded-xl shadow-lg shadow-destructive/20"
                         >
                           {isProcessing ? (
                             <RefreshCw className="h-4 w-4 animate-spin" />
@@ -580,19 +609,22 @@ export const Dashboard = () => {
                         </Button>
                       )}
 
-                      <Button 
-                        variant="outline"
-                        onClick={handleProcess} 
-                        disabled={isProcessing || selectedCount === 0}
-                        className="gap-2 rounded-full"
-                      >
-                        {isProcessing ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4" />
-                        )}
-                        {isProcessing ? 'Processing...' : `Process Selected (${selectedCount})`}
-                      </Button>
+                      {selectedCount > 0 && (
+                        <Button 
+                          variant="outline"
+                          onClick={handleProcess} 
+                          disabled={isProcessing}
+                          size="lg"
+                          className="gap-2 rounded-xl border-2"
+                        >
+                          {isProcessing ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
+                          Process Selected ({selectedCount})
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
@@ -601,45 +633,61 @@ export const Dashboard = () => {
 
             {/* Folder Filter & Email List */}
             {emails.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-6 animate-fade-in">
                 {/* Folder Filter Tabs */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 p-1.5 bg-white/50 backdrop-blur-sm rounded-2xl w-fit shadow-lg shadow-black/5 border border-white/50">
                   <Button
-                    variant={folderFilter === 'all' ? 'default' : 'outline'}
+                    variant={folderFilter === 'all' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setFolderFilter('all')}
-                    className="gap-2 rounded-full"
+                    className={`gap-2 rounded-xl transition-all ${folderFilter === 'all' ? 'shadow-md' : 'hover:bg-white/50'}`}
                   >
                     <FolderOpen className="h-4 w-4" />
                     All ({emails.length})
                   </Button>
                   <Button
-                    variant={folderFilter === 'spam' ? 'default' : 'outline'}
+                    variant={folderFilter === 'spam' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setFolderFilter('spam')}
-                    className="gap-2 rounded-full"
+                    className={`gap-2 rounded-xl transition-all ${folderFilter === 'spam' ? 'shadow-md' : 'hover:bg-white/50'}`}
                   >
                     <Inbox className="h-4 w-4" />
                     Spam ({spamFolderCount})
                   </Button>
                   <Button
-                    variant={folderFilter === 'trash' ? 'default' : 'outline'}
+                    variant={folderFilter === 'trash' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setFolderFilter('trash')}
-                    className="gap-2 rounded-full"
+                    className={`gap-2 rounded-xl transition-all ${folderFilter === 'trash' ? 'shadow-md' : 'hover:bg-white/50'}`}
                   >
                     <Trash2 className="h-4 w-4" />
                     Trash ({trashFolderCount})
                   </Button>
                 </div>
 
-                <EmailList 
-                  emails={filteredEmails}
-                  onSelect={handleSelectEmail}
-                  onSelectAll={handleSelectAll}
-                  onPreview={handlePreviewEmail}
-                  onRemove={handleRemoveEmail}
-                />
+                {/* Email List with glass container */}
+                <div className="bg-white/40 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-black/5 p-6">
+                  <EmailList 
+                    emails={filteredEmails}
+                    onSelect={handleSelectEmail}
+                    onSelectAll={handleSelectAll}
+                    onPreview={handlePreviewEmail}
+                    onRemove={handleRemoveEmail}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Empty state when no emails */}
+            {emails.length === 0 && (
+              <div className="text-center py-16 bg-white/40 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-black/5">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                  <Mail className="h-10 w-10 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Ready to clean up?</h3>
+                <p className="text-muted-foreground max-w-sm mx-auto">
+                  Click "Scan Emails" to fetch emails from your Spam and Trash folders, then let AI analyze them.
+                </p>
               </div>
             )}
 
