@@ -35,11 +35,11 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
   const getConfidenceBadge = (confidence?: string) => {
     switch (confidence) {
       case 'definitely_spam':
-        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" /> Definitely Spam</Badge>;
+        return <Badge variant="destructive" className="gap-1 text-xs font-normal"><XCircle className="h-3 w-3" /> Spam</Badge>;
       case 'likely_spam':
-        return <Badge className="gap-1 bg-warning text-warning-foreground"><AlertTriangle className="h-3 w-3" /> Likely Spam</Badge>;
+        return <Badge className="gap-1 text-xs font-normal bg-warning/15 text-warning-foreground border-warning/30"><AlertTriangle className="h-3 w-3" /> Likely Spam</Badge>;
       case 'might_be_important':
-        return <Badge variant="secondary" className="gap-1"><Info className="h-3 w-3" /> Might Be Important</Badge>;
+        return <Badge variant="secondary" className="gap-1 text-xs font-normal"><Info className="h-3 w-3" /> Maybe Important</Badge>;
       default:
         return null;
     }
@@ -48,53 +48,55 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'success':
-        return <Badge className="gap-1 bg-success text-success-foreground"><CheckCircle2 className="h-3 w-3" /> Unsubscribed</Badge>;
+        return <Badge className="gap-1 text-xs font-normal bg-success/15 text-success border-success/30"><CheckCircle2 className="h-3 w-3" /> Done</Badge>;
       case 'failed':
-        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" /> Failed</Badge>;
+        return <Badge variant="destructive" className="gap-1 text-xs font-normal"><XCircle className="h-3 w-3" /> Failed</Badge>;
       case 'opened_link':
-        return <Badge variant="outline" className="gap-1"><ExternalLink className="h-3 w-3" /> Link Opened</Badge>;
+        return <Badge variant="outline" className="gap-1 text-xs font-normal"><ExternalLink className="h-3 w-3" /> Opened</Badge>;
       default:
         return null;
     }
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Spam Emails ({emails.length})
+    <Card className="border-0 elegant-shadow">
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <Mail className="h-5 w-5 text-muted-foreground" />
+          Emails ({emails.length})
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={onSelectAll}>
+        <Button variant="ghost" size="sm" onClick={onSelectAll} className="text-xs">
           {allSelected ? 'Deselect All' : 'Select All'}
         </Button>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[500px]">
-          <div className="space-y-3">
+      <CardContent className="pt-0">
+        <ScrollArea className="h-[480px]">
+          <div className="space-y-2">
             {emails.map((email) => (
               <div 
                 key={email.id}
-                className={`p-4 rounded-lg border transition-colors ${
-                  email.selected ? 'bg-primary/5 border-primary/30' : 'bg-card hover:bg-muted/50'
+                className={`p-4 rounded-lg border transition-all ${
+                  email.selected 
+                    ? 'bg-accent/50 border-primary/20' 
+                    : 'bg-background hover:bg-muted/30 border-transparent'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <Checkbox 
                     checked={email.selected}
                     onCheckedChange={() => onSelect(email.id)}
-                    className="mt-1"
+                    className="mt-0.5"
                   />
                   <div 
                     className="flex-1 min-w-0 cursor-pointer"
                     onClick={() => onPreview(email)}
                   >
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-medium truncate">{email.sender}</span>
+                      <span className="font-medium text-sm truncate">{email.sender}</span>
                       {email.hasListUnsubscribe && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge variant="outline" className="gap-1 text-xs">
+                            <Badge variant="outline" className="gap-1 text-xs font-normal text-primary border-primary/30">
                               <Zap className="h-3 w-3" /> Auto
                             </Badge>
                           </TooltipTrigger>
@@ -106,12 +108,12 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                       {email.unsubscribeLink && !email.hasListUnsubscribe && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge variant="outline" className="gap-1 text-xs">
+                            <Badge variant="outline" className="gap-1 text-xs font-normal">
                               <ExternalLink className="h-3 w-3" /> Web
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
-                            Opens unsubscribe page in new tab
+                            Opens unsubscribe page
                           </TooltipContent>
                         </Tooltip>
                       )}
@@ -127,8 +129,8 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                       {getStatusBadge(email.unsubscribeStatus)}
                     </div>
                     {email.aiReasoning && (
-                      <p className="text-xs text-muted-foreground mt-2 italic">
-                        AI: "{email.aiReasoning}"
+                      <p className="text-xs text-muted-foreground mt-2 italic line-clamp-1">
+                        "{email.aiReasoning}"
                       </p>
                     )}
                   </div>
@@ -138,7 +140,7 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
                           onClick={(e) => {
                             e.stopPropagation();
                             onPreview(email);
@@ -147,7 +149,7 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                           <Eye className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Preview email</TooltipContent>
+                      <TooltipContent>Preview</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -163,7 +165,7 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove }
                           <X className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Remove from list</TooltipContent>
+                      <TooltipContent>Remove</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>

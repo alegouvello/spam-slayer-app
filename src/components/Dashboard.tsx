@@ -12,7 +12,8 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Clock,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
@@ -68,7 +69,7 @@ export const Dashboard = () => {
     setIsAnalyzing(true);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-spam', {
-        body: { emails: emails.slice(0, 20) } // Analyze up to 20 emails at a time
+        body: { emails: emails.slice(0, 20) }
       });
 
       if (error) throw error;
@@ -123,7 +124,6 @@ export const Dashboard = () => {
     for (const email of selectedEmails) {
       try {
         if (email.hasListUnsubscribe) {
-          // Auto-unsubscribe via header
           const { data, error } = await supabase.functions.invoke('gmail-unsubscribe', {
             body: { 
               emailId: email.id, 
@@ -136,11 +136,9 @@ export const Dashboard = () => {
           if (error) throw error;
 
           if (data?.deleted) {
-            // Email was deleted from Gmail - remove from list
             deletedEmailIds.push(email.id);
             deleted++;
           } else {
-            // Unsubscribed but not deleted - update status
             setEmails(prev => prev.map(e => 
               e.id === email.id ? { ...e, unsubscribeStatus: 'success' } : e
             ));
@@ -148,7 +146,6 @@ export const Dashboard = () => {
           succeeded++;
           toast.success(`Unsubscribed from ${email.sender}`);
         } else if (email.unsubscribeLink) {
-          // Open web link for manual unsubscribe
           window.open(email.unsubscribeLink, '_blank');
           setEmails(prev => prev.map(e => 
             e.id === email.id ? { ...e, unsubscribeStatus: 'opened_link' } : e
@@ -165,7 +162,6 @@ export const Dashboard = () => {
       }
     }
 
-    // Remove deleted emails from the list
     if (deletedEmailIds.length > 0) {
       setEmails(prev => prev.filter(e => !deletedEmailIds.includes(e.id)));
     }
@@ -237,23 +233,23 @@ export const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="border-b bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Mail className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-lg">Spam Cleanup</span>
+            <Mail className="h-5 w-5 text-primary" />
+            <span className="font-medium">Spam Cleanup</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs">
                   {user?.email?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm hidden md:inline">{user?.email}</span>
+              <span className="text-sm text-muted-foreground hidden md:inline">{user?.email}</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -261,20 +257,25 @@ export const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="cleanup" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="cleanup" className="gap-2">
+      <main className="container mx-auto px-6 py-10 max-w-5xl">
+        <div className="mb-10">
+          <h1 className="text-2xl font-medium mb-1">Welcome back</h1>
+          <p className="text-muted-foreground">Manage your spam and subscriptions</p>
+        </div>
+
+        <Tabs defaultValue="cleanup" className="space-y-8">
+          <TabsList className="bg-muted/50 p-1 rounded-full w-fit">
+            <TabsTrigger value="cleanup" className="gap-2 rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
               <Trash2 className="h-4 w-4" />
               Cleanup
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-2">
+            <TabsTrigger value="schedule" className="gap-2 rounded-full px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
               <Clock className="h-4 w-4" />
               Schedule
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="cleanup" className="space-y-6">
+          <TabsContent value="cleanup" className="space-y-8">
             {/* Gmail Connection */}
             <GmailConnect onConnected={() => setGmailConnected(true)} />
 
@@ -282,11 +283,11 @@ export const Dashboard = () => {
             <StatsCards stats={stats} />
 
             {/* Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Spam Folder Cleanup</CardTitle>
+            <Card className="border-0 elegant-shadow">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-medium">Spam Folder</CardTitle>
                 <CardDescription>
-                  Scan your spam folder, review AI suggestions, and clean up unwanted emails
+                  Scan, review, and clean up unwanted emails
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -294,14 +295,14 @@ export const Dashboard = () => {
                   <Button 
                     onClick={handleScanSpam} 
                     disabled={isScanning}
-                    className="gap-2"
+                    className="gap-2 rounded-full"
                   >
                     {isScanning ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
                       <Scan className="h-4 w-4" />
                     )}
-                    {isScanning ? 'Scanning...' : 'Scan Spam Folder'}
+                    {isScanning ? 'Scanning...' : 'Scan Spam'}
                   </Button>
 
                   {emails.length > 0 && (
@@ -310,12 +311,12 @@ export const Dashboard = () => {
                         variant="secondary"
                         onClick={handleAnalyze} 
                         disabled={isAnalyzing}
-                        className="gap-2"
+                        className="gap-2 rounded-full"
                       >
                         {isAnalyzing ? (
                           <RefreshCw className="h-4 w-4 animate-spin" />
                         ) : (
-                          <AlertCircle className="h-4 w-4" />
+                          <Sparkles className="h-4 w-4" />
                         )}
                         {isAnalyzing ? 'Analyzing...' : 'AI Analyze'}
                       </Button>
@@ -324,14 +325,14 @@ export const Dashboard = () => {
                         variant="default"
                         onClick={handleProcess} 
                         disabled={isProcessing || selectedCount === 0}
-                        className="gap-2"
+                        className="gap-2 rounded-full"
                       >
                         {isProcessing ? (
                           <RefreshCw className="h-4 w-4 animate-spin" />
                         ) : (
                           <CheckCircle2 className="h-4 w-4" />
                         )}
-                        {isProcessing ? 'Processing...' : `Process Selected (${selectedCount})`}
+                        {isProcessing ? 'Processing...' : `Process (${selectedCount})`}
                       </Button>
                     </>
                   )}

@@ -1,11 +1,10 @@
 import { CleanupStats } from '@/types/email';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   CheckCircle2, 
   XCircle, 
   Trash2, 
-  ExternalLink,
-  TrendingUp
+  ExternalLink
 } from 'lucide-react';
 
 interface StatsCardsProps {
@@ -15,11 +14,11 @@ interface StatsCardsProps {
 export const StatsCards = ({ stats }: StatsCardsProps) => {
   const cards = [
     {
-      title: 'Total Processed',
+      title: 'Processed',
       value: stats.totalProcessed,
-      icon: TrendingUp,
+      icon: Trash2,
       color: 'text-primary',
-      bgColor: 'bg-primary/10',
+      bgColor: 'bg-accent',
     },
     {
       title: 'Unsubscribed',
@@ -47,17 +46,15 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards.map((card) => (
-        <Card key={card.title}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {card.title}
-            </CardTitle>
-            <div className={`p-2 rounded-lg ${card.bgColor}`}>
-              <card.icon className={`h-4 w-4 ${card.color}`} />
+        <Card key={card.title} className="border-0 elegant-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className={`p-2 rounded-full ${card.bgColor}`}>
+                <card.icon className={`h-4 w-4 ${card.color}`} />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{card.value}</p>
+            <p className="text-2xl font-medium mb-1">{card.value}</p>
+            <p className="text-xs text-muted-foreground">{card.title}</p>
           </CardContent>
         </Card>
       ))}
