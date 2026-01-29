@@ -15,13 +15,15 @@ import {
   RefreshCw,
   Sparkles,
   Inbox,
-  FolderOpen
+  FolderOpen,
+  Users
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
 import { ScheduleSettings } from './ScheduleSettings';
 import { StatsCards } from './StatsCards';
 import { GmailConnect } from './GmailConnect';
+import { SpamSendersList } from './SpamSendersList';
 import { Email, CleanupStats } from '@/types/email';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -530,6 +532,10 @@ export const Dashboard = () => {
               <Trash2 className="h-4 w-4" />
               Cleanup
             </TabsTrigger>
+            <TabsTrigger value="senders" className="gap-2 rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+              <Users className="h-4 w-4" />
+              Learned
+            </TabsTrigger>
             <TabsTrigger value="schedule" className="gap-2 rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
               <Clock className="h-4 w-4" />
               Schedule
@@ -701,7 +707,11 @@ export const Dashboard = () => {
             />
           </TabsContent>
 
-          <TabsContent value="schedule">
+          <TabsContent value="senders" className="animate-fade-in">
+            <SpamSendersList />
+          </TabsContent>
+
+          <TabsContent value="schedule" className="animate-fade-in">
             <ScheduleSettings />
           </TabsContent>
         </Tabs>
