@@ -131,6 +131,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sender_feedback: {
+        Row: {
+          created_at: string
+          feedback_count: number
+          id: string
+          marked_as_spam: boolean
+          sender_email: string
+          sender_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_count?: number
+          id?: string
+          marked_as_spam?: boolean
+          sender_email: string
+          sender_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_count?: number
+          id?: string
+          marked_as_spam?: boolean
+          sender_email?: string
+          sender_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
