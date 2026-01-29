@@ -1,0 +1,10 @@
+project_id = "pdlmsicltphrvzeczzby"
+
+[functions.gmail-scan]
+verify_jwt = false
+
+[functions.gmail-unsubscribe]
+verify_jwt = false
+
+[functions.analyze-spam]
+verify_jwt = false
