@@ -82,18 +82,18 @@ type GmailDeleteResult =
       message?: string;
     };
 
-async function trashEmailInGmail(accessToken: string, emailId: string): Promise<GmailDeleteResult> {
-  // Move email to Trash (gmail.modify scope supports this)
+async function deleteEmailPermanently(accessToken: string, emailId: string): Promise<GmailDeleteResult> {
+  // Permanently delete email (requires mail.google.com scope)
   const response = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/trash`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
     {
-      method: 'POST',
+      method: 'DELETE',
       headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
 
-  if (response.ok) {
-    console.log(`Successfully trashed email ${emailId} in Gmail`);
+  if (response.ok || response.status === 204) {
+    console.log(`Successfully permanently deleted email ${emailId} from Gmail`);
     return { ok: true };
   }
 
@@ -113,7 +113,7 @@ async function trashEmailInGmail(accessToken: string, emailId: string): Promise<
     message: payload?.error?.message,
   };
 
-  console.error('Gmail trash error:', { emailId, ...result });
+  console.error('Gmail permanent delete error:', { emailId, ...result });
   return result;
 }
 
@@ -167,8 +167,8 @@ serve(async (req) => {
       // (actual unsubscribe happens via mailto: or one-click which we can't fully automate)
       console.log(`Auto-unsubscribe processed for email ${emailId}`);
       
-      // Trash the email from Gmail
-      const deleteResult = await trashEmailInGmail(accessToken, emailId);
+      // Permanently delete the email from Gmail
+      const deleteResult = await deleteEmailPermanently(accessToken, emailId);
       const deleted = deleteResult.ok;
       
       // Log to cleanup history
@@ -188,17 +188,17 @@ serve(async (req) => {
         success: true, 
         deleted: deleted,
         deleteError: deleted ? null : deleteResult,
-        message: deleted ? 'Successfully unsubscribed and trashed email' : 'Unsubscribed but failed to trash email'
+        message: deleted ? 'Successfully unsubscribed and permanently deleted email' : 'Unsubscribed but failed to delete email'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (method === 'delete_only') {
-      // Just trash the email without unsubscribing
-      console.log(`Trash-only processed for email ${emailId}`);
+      // Permanently delete the email without unsubscribing
+      console.log(`Permanent delete processed for email ${emailId}`);
       
-      const deleteResult = await trashEmailInGmail(accessToken, emailId);
+      const deleteResult = await deleteEmailPermanently(accessToken, emailId);
       const deleted = deleteResult.ok;
       
       // Log to cleanup history
@@ -218,7 +218,7 @@ serve(async (req) => {
         success: deleted, 
         deleted: deleted,
         deleteError: deleted ? null : deleteResult,
-        message: deleted ? 'Successfully trashed email' : 'Failed to trash email'
+        message: deleted ? 'Successfully permanently deleted email' : 'Failed to delete email'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
