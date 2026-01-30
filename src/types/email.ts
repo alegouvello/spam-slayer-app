@@ -4,6 +4,12 @@ export type UnsubscribeMethod = 'auto_header' | 'web_link' | 'none';
 
 export type UnsubscribeStatus = 'pending' | 'success' | 'failed' | 'opened_link';
 
+export interface GmailAccount {
+  id: string;
+  email: string;
+  isPrimary: boolean;
+}
+
 export interface Email {
   id: string;
   sender: string;
@@ -20,6 +26,8 @@ export interface Email {
   unsubscribeMethod?: UnsubscribeMethod;
   unsubscribeStatus?: UnsubscribeStatus;
   selected?: boolean;
+  accountEmail?: string;
+  accountId?: string;
 }
 
 export interface ScanResult {

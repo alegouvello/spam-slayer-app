@@ -24,8 +24,20 @@ function isValidRedirectUri(uri: string): boolean {
   }
 }
 
+async function getGmailEmail(accessToken: string): Promise<string | null> {
+  try {
+    const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.emailAddress || null;
+  } catch {
+    return null;
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -47,7 +59,6 @@ serve(async (req) => {
       });
     }
 
-    // Validate redirectUri against allowlist
     if (!isValidRedirectUri(redirectUri)) {
       return new Response(JSON.stringify({ error: 'Invalid redirect URI' }), {
         status: 400,
@@ -61,7 +72,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify the logged-in user (we store tokens for THIS user)
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
@@ -97,6 +107,16 @@ serve(async (req) => {
       });
     }
 
+    // Get the Gmail email address for this account
+    const gmailEmail = await getGmailEmail(tokens.access_token);
+    if (!gmailEmail) {
+      console.error('Failed to get Gmail email address');
+      return new Response(JSON.stringify({ error: 'Failed to get Gmail profile' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const expiresAt = new Date(Date.now() + (tokens.expires_in ?? 0) * 1000).toISOString();
 
     // Encrypt tokens before storing
@@ -105,26 +125,66 @@ serve(async (req) => {
       ? await encrypt(tokens.refresh_token) 
       : undefined;
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        gmail_access_token: encryptedAccessToken,
-        gmail_refresh_token: encryptedRefreshToken,
-        gmail_token_expires_at: expiresAt,
-      })
-      .eq('user_id', user.id);
+    // Check if this account already exists for this user
+    const { data: existingAccount } = await supabase
+      .from('gmail_accounts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('gmail_email', gmailEmail)
+      .single();
 
-    if (updateError) {
-      console.error('Failed to store tokens:', updateError);
-      return new Response(JSON.stringify({ error: 'Failed to store tokens' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Check if user has any connected accounts (for setting is_primary)
+    const { data: existingAccounts } = await supabase
+      .from('gmail_accounts')
+      .select('id')
+      .eq('user_id', user.id)
+      .not('gmail_access_token', 'is', null);
+
+    const isFirstAccount = !existingAccounts || existingAccounts.length === 0;
+
+    if (existingAccount) {
+      // Update existing account
+      const { error: updateError } = await supabase
+        .from('gmail_accounts')
+        .update({
+          gmail_access_token: encryptedAccessToken,
+          gmail_refresh_token: encryptedRefreshToken || undefined,
+          gmail_token_expires_at: expiresAt,
+        })
+        .eq('id', existingAccount.id);
+
+      if (updateError) {
+        console.error('Failed to update tokens:', updateError);
+        return new Response(JSON.stringify({ error: 'Failed to store tokens' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      // Insert new account
+      const { error: insertError } = await supabase
+        .from('gmail_accounts')
+        .insert({
+          user_id: user.id,
+          gmail_email: gmailEmail,
+          gmail_access_token: encryptedAccessToken,
+          gmail_refresh_token: encryptedRefreshToken,
+          gmail_token_expires_at: expiresAt,
+          is_primary: isFirstAccount,
+        });
+
+      if (insertError) {
+        console.error('Failed to insert tokens:', insertError);
+        return new Response(JSON.stringify({ error: 'Failed to store tokens' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
-    console.log('Gmail tokens encrypted and stored successfully');
+    console.log(`Gmail account ${gmailEmail} connected successfully`);
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, email: gmailEmail }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      gmail_accounts: {
+        Row: {
+          created_at: string
+          gmail_access_token: string | null
+          gmail_email: string
+          gmail_refresh_token: string | null
+          gmail_token_expires_at: string | null
+          id: string
+          is_primary: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gmail_access_token?: string | null
+          gmail_email: string
+          gmail_refresh_token?: string | null
+          gmail_token_expires_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gmail_access_token?: string | null
+          gmail_email?: string
+          gmail_refresh_token?: string | null
+          gmail_token_expires_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
