@@ -80,182 +80,127 @@ export const LandingPage = () => {
         <ThemeToggle />
       </div>
 
-      {/* Hero Section */}
-      <div className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center overflow-hidden z-10">
-        
-        <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <motion.div 
-            className="max-w-2xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-          >
-            <motion.p 
-              className="text-xs sm:text-sm font-medium text-primary mb-3 sm:mb-4 tracking-wide uppercase"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              Email Simplified
-            </motion.p>
-            <motion.h1 
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-4 sm:mb-6 leading-[1.1]"
+      {/* Single-Screen Layout */}
+      <div className="relative min-h-screen flex flex-col z-10">
+        {/* Hero Content */}
+        <div className="flex-1 flex items-center">
+          <div className="container mx-auto px-4 sm:px-6">
+            <motion.div 
+              className="max-w-2xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              A cleaner inbox
-              <br />
-              <span className="text-muted-foreground">starts here</span>
-            </motion.h1>
-            <motion.p 
-              className="text-base sm:text-lg text-muted-foreground mb-8 sm:mb-10 max-w-lg leading-relaxed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              Effortlessly remove spam and unwanted subscriptions. 
-              Our AI handles the unsubscribing so you don't have to.
-            </motion.p>
-            
-            {error && (
-              <motion.div 
-                className="mb-4 sm:mb-6 p-3 sm:p-4 bg-destructive/10 text-destructive rounded-lg text-sm"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+              <motion.p 
+                className="text-xs sm:text-sm font-medium text-primary mb-3 sm:mb-4 tracking-wide uppercase"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
               >
-                {error}
-              </motion.div>
-            )}
-            
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <Button 
-                size="lg" 
-                className="gap-2 sm:gap-3 text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 rounded-full elegant-shadow w-full sm:w-auto"
-                onClick={handleSignIn}
-                disabled={isLoading}
+                Email Simplified
+              </motion.p>
+              <motion.h1 
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-4 sm:mb-6 leading-[1.1]"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
               >
-                <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                {isLoading ? 'Connecting...' : 'Continue with Google'}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-3 sm:mt-4 text-center sm:text-left">
-                Read-only access to your spam folder
-              </p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="relative py-16 sm:py-24 bg-background/80 backdrop-blur-sm z-10">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-xl mb-10 sm:mb-16">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-3 sm:mb-4">
-              How it works
-            </h2>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Three steps to email peace of mind
-            </p>
-          </div>
-          
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12 md:gap-8">
-            {features.map((feature, index) => (
-              <div key={feature.title} className="group">
-                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-accent flex items-center justify-center">
-                    <feature.icon className="h-4 w-4 sm:h-5 sm:w-5 text-accent-foreground" />
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Step {index + 1}
-                  </span>
-                </div>
-                <h3 className="text-base sm:text-lg font-medium mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {feature.description}
+                A cleaner inbox
+                <br />
+                <span className="text-muted-foreground">starts here</span>
+              </motion.h1>
+              <motion.p 
+                className="text-base sm:text-lg text-muted-foreground mb-6 max-w-lg leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                Effortlessly remove spam and unwanted subscriptions. 
+                Our AI handles the unsubscribing so you don't have to.
+              </motion.p>
+              
+              {error && (
+                <motion.div 
+                  className="mb-4 p-3 sm:p-4 bg-destructive/10 text-destructive rounded-lg text-sm"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  {error}
+                </motion.div>
+              )}
+              
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <Button 
+                  size="lg" 
+                  className="gap-2 sm:gap-3 text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 rounded-full elegant-shadow w-full sm:w-auto"
+                  onClick={handleSignIn}
+                  disabled={isLoading}
+                >
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  {isLoading ? 'Connecting...' : 'Continue with Google'}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Read-only access to your spam folder
                 </p>
+              </motion.div>
+
+              {/* Inline Features */}
+              <motion.div 
+                className="flex flex-wrap gap-6 mt-10 pt-8 border-t border-border/50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                {features.map((feature) => (
+                  <div key={feature.title} className="flex items-center gap-2">
+                    <feature.icon className="h-4 w-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">{feature.title}</span>
+                  </div>
+                ))}
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Minimal Footer */}
+        <footer className="py-4 sm:py-6">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5" />
+                <span>Spam Slayer</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="relative py-14 sm:py-20 border-t bg-background/80 backdrop-blur-sm z-10">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-3 sm:mb-4">
-            Ready to clean up?
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 max-w-md mx-auto">
-            Join thousands who've already reclaimed their inbox
-          </p>
-          <Button 
-            size="lg" 
-            variant="outline"
-            className="gap-2 rounded-full h-11 sm:h-12 px-6 sm:px-8 w-full sm:w-auto"
-            onClick={handleSignIn}
-            disabled={isLoading}
-          >
-            Get Started
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="relative py-6 sm:py-8 border-t bg-background/90 backdrop-blur-sm z-10">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Spam Slayer</span>
+              <div className="flex items-center gap-4">
+                <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+                <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+                <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+              </div>
+              <p>© {new Date().getFullYear()}</p>
             </div>
-            <div className="flex items-center gap-4 sm:gap-6">
-              <Link 
-                to="/contact" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Contact
-              </Link>
-              <Link 
-                to="/terms" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Terms of Service
-              </Link>
-              <Link 
-                to="/privacy" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Privacy Policy
-              </Link>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Spam Slayer
-            </p>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 };
