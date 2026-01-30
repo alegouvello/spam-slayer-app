@@ -48,6 +48,7 @@ export const Dashboard = () => {
     failedUnsubscribes: 0,
     deletedEmails: 0,
     webLinksOpened: 0,
+    autoUnsubscribes: 0,
   });
 
   // Load stats from cleanup history and sender feedback on mount
@@ -73,6 +74,7 @@ export const Dashboard = () => {
         failedUnsubscribes: history.filter(h => h.unsubscribe_status === 'failed').length,
         deletedEmails: history.filter(h => h.deleted === true).length,
         webLinksOpened: history.filter(h => h.unsubscribe_method === 'web_link').length,
+        autoUnsubscribes: history.filter(h => h.unsubscribe_method === 'auto_header').length,
       });
       setStatsLoaded(true);
     } catch (error) {
@@ -234,6 +236,7 @@ export const Dashboard = () => {
     let succeeded = 0;
     let failed = 0;
     let webOpened = 0;
+    let autoUnsubs = 0;
     const deletedEmailIds: string[] = [];
 
     for (const email of spamEmails) {
@@ -254,6 +257,7 @@ export const Dashboard = () => {
           if (data?.deleted) {
             deletedEmailIds.push(email.id);
           }
+          autoUnsubs++;
           succeeded++;
         } else if (email.unsubscribeLink) {
           // Open web link for manual unsubscribe, then delete from Gmail
@@ -308,6 +312,7 @@ export const Dashboard = () => {
       failedUnsubscribes: prev.failedUnsubscribes + failed,
       deletedEmails: prev.deletedEmails + deletedEmailIds.length,
       webLinksOpened: prev.webLinksOpened + webOpened,
+      autoUnsubscribes: prev.autoUnsubscribes + autoUnsubs,
     }));
 
     toast.success(`Cleaned ${deletedEmailIds.length} spam emails${webOpened > 0 ? `, ${webOpened} unsubscribe links opened` : ''}`);
@@ -355,6 +360,7 @@ export const Dashboard = () => {
     let failed = 0;
     let webOpened = 0;
     let deleted = 0;
+    let autoUnsubs = 0;
     const deletedEmailIds: string[] = [];
 
     for (const email of selectedEmails) {
@@ -379,6 +385,7 @@ export const Dashboard = () => {
               e.id === email.id ? { ...e, unsubscribeStatus: 'success' } : e
             ));
           }
+          autoUnsubs++;
           succeeded++;
           toast.success(`Unsubscribed from ${email.sender}`);
         } else if (email.unsubscribeLink) {
@@ -409,6 +416,7 @@ export const Dashboard = () => {
       failedUnsubscribes: prev.failedUnsubscribes + failed,
       deletedEmails: prev.deletedEmails + deleted,
       webLinksOpened: prev.webLinksOpened + webOpened,
+      autoUnsubscribes: prev.autoUnsubscribes + autoUnsubs,
     }));
 
     setIsProcessing(false);
@@ -476,6 +484,7 @@ export const Dashboard = () => {
             totalProcessed: prev.totalProcessed + 1,
             successfulUnsubscribes: prev.successfulUnsubscribes + 1,
             deletedEmails: prev.deletedEmails + 1,
+            autoUnsubscribes: prev.autoUnsubscribes + 1,
           }));
         }
         toast.success(`Unsubscribed from ${email.sender}`);

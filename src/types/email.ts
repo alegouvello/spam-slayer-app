@@ -34,6 +34,7 @@ export interface CleanupStats {
   failedUnsubscribes: number;
   deletedEmails: number;
   webLinksOpened: number;
+  autoUnsubscribes: number;
 }
 
 export interface ScheduledCleanup {
