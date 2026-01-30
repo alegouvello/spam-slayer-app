@@ -151,23 +151,50 @@ export const Dashboard = () => {
 
       if (error) throw error;
 
-      // Apply learned sender feedback to pre-flag known spammers
-      const emailsWithFeedback = (data.emails || []).map((email: Email) => {
+      // Filter out safe senders and apply learned feedback to pre-flag known spammers
+      const allEmails = data.emails || [];
+      
+      // Count safe senders that will be hidden
+      const hiddenSafeSenders = allEmails.filter((email: Email) => {
         const senderEmail = email.senderEmail?.toLowerCase();
-        if (senderEmail && senderFeedback[senderEmail] === true) {
-          return {
-            ...email,
-            spamConfidence: 'definitely_spam' as const,
-            aiReasoning: 'Previously marked as spam by you',
-          };
-        }
-        return email;
+        return senderEmail && senderFeedback[senderEmail] === false;
       });
+
+      // Filter and process emails
+      const emailsWithFeedback = allEmails
+        .filter((email: Email) => {
+          const senderEmail = email.senderEmail?.toLowerCase();
+          // Hide emails from senders marked as safe (not spam)
+          if (senderEmail && senderFeedback[senderEmail] === false) {
+            return false;
+          }
+          return true;
+        })
+        .map((email: Email) => {
+          const senderEmail = email.senderEmail?.toLowerCase();
+          if (senderEmail && senderFeedback[senderEmail] === true) {
+            return {
+              ...email,
+              spamConfidence: 'definitely_spam' as const,
+              aiReasoning: 'Previously marked as spam by you',
+            };
+          }
+          return email;
+        });
 
       setEmails(emailsWithFeedback);
       
       const preMarked = emailsWithFeedback.filter((e: Email) => e.spamConfidence).length;
-      toast.success(`Found ${emailsWithFeedback.length} emails${preMarked > 0 ? ` (${preMarked} already flagged from your history)` : ''}`);
+      const hiddenCount = hiddenSafeSenders.length;
+      
+      let message = `Found ${emailsWithFeedback.length} emails`;
+      if (hiddenCount > 0) {
+        message += ` (${hiddenCount} from safe senders hidden)`;
+      }
+      if (preMarked > 0) {
+        message += ` (${preMarked} flagged as spam)`;
+      }
+      toast.success(message);
     } catch (error) {
       console.error('Scan error:', error);
       toast.error('Failed to scan spam folder. Please try again.');
