@@ -1,9 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, CheckCircle2, ExternalLink, Sparkles } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Mail, Sparkles, LogOut, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface GmailConnectProps {
   onConnected: () => void;
@@ -13,6 +24,7 @@ export const GmailConnect = ({ onConnected }: GmailConnectProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   useEffect(() => {
     checkConnection();
@@ -65,6 +77,34 @@ export const GmailConnect = ({ onConnected }: GmailConnectProps) => {
     }
   };
 
+  const handleDisconnect = async () => {
+    setIsDisconnecting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Clear Gmail tokens from profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          gmail_access_token: null,
+          gmail_refresh_token: null,
+          gmail_token_expires_at: null,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setIsConnected(false);
+      toast.success('Gmail disconnected. You can now reconnect with updated permissions.');
+    } catch (error) {
+      console.error('Gmail disconnect error:', error);
+      toast.error('Failed to disconnect Gmail. Please try again.');
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
   if (isChecking) {
     return (
       <Card className="border bg-background/60 backdrop-blur-sm border-border/50">
@@ -78,9 +118,39 @@ export const GmailConnect = ({ onConnected }: GmailConnectProps) => {
     );
   }
 
-  // Don't show anything when connected - the banner is no longer needed
+  // Show disconnect option when connected
   if (isConnected) {
-    return null;
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2 text-destructive hover:text-destructive">
+            <LogOut className="h-4 w-4" />
+            Disconnect Gmail
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Disconnect Gmail?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the Gmail connection. You'll need to reconnect to continue using the app.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDisconnect}
+              disabled={isDisconnecting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
   }
 
   return (
