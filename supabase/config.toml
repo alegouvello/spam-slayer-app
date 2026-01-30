@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.gmail-token-exchange]
 verify_jwt = false
+
+[functions.scheduled-cleanup]
+verify_jwt = false
