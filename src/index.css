@@ -157,4 +157,8 @@
       hsl(var(--background)) 100%
     );
   }
+
+  .duration-1500 {
+    transition-duration: 1500ms;
+  }
 }
