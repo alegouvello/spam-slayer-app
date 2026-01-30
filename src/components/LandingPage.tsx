@@ -232,6 +232,12 @@ export const LandingPage = () => {
             </div>
             <div className="flex items-center gap-4 sm:gap-6">
               <Link 
+                to="/contact" 
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Contact
+              </Link>
+              <Link 
                 to="/terms" 
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
