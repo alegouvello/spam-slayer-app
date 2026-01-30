@@ -20,10 +20,10 @@ const App = () => (
     <ThemeProvider>
       <AuthProvider>
         <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <CookieConsent />
-        <BrowserRouter>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <CookieConsent />
             <AnimatedLayout>
               <Routes>
                 <Route path="/" element={<Index />} />
