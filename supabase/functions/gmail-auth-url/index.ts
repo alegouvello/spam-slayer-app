@@ -73,6 +73,7 @@ serve(async (req) => {
     const scopes = [
       'https://www.googleapis.com/auth/gmail.readonly',
       'https://www.googleapis.com/auth/gmail.modify',
+      'https://mail.google.com/', // Required for permanent delete
     ];
 
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
