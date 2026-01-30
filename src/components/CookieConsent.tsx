@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Cookie, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -57,7 +58,8 @@ export const CookieConsent = () => {
                 
                 <p className="text-xs text-muted-foreground mt-1 mb-4 leading-relaxed">
                   We use cookies to enhance your experience and analyze site usage. 
-                  By continuing, you agree to our use of cookies.
+                  By continuing, you agree to our{' '}
+                  <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
                 </p>
                 
                 <div className="flex items-center gap-2">
