@@ -98,9 +98,6 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string | null
-          gmail_access_token: string | null
-          gmail_refresh_token: string | null
-          gmail_token_expires_at: string | null
           id: string
           updated_at: string
           user_id: string
@@ -110,9 +107,6 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
-          gmail_access_token?: string | null
-          gmail_refresh_token?: string | null
-          gmail_token_expires_at?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -122,9 +116,6 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
-          gmail_access_token?: string | null
-          gmail_refresh_token?: string | null
-          gmail_token_expires_at?: string | null
           id?: string
           updated_at?: string
           user_id?: string
