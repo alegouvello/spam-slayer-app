@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AnimatedLayout } from "@/components/AnimatedLayout";
+import { CookieConsent } from "@/components/CookieConsent";
 import Index from "./pages/Index";
 import GmailCallback from "./pages/GmailCallback";
 import NotFound from "./pages/NotFound";
@@ -17,9 +18,10 @@ const App = () => (
     <ThemeProvider>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <Toaster />
+        <Sonner />
+        <CookieConsent />
+        <BrowserRouter>
             <AnimatedLayout>
               <Routes>
                 <Route path="/" element={<Index />} />
