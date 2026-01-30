@@ -34,6 +34,8 @@ export const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
   const [folderFilter, setFolderFilter] = useState<'all' | 'spam' | 'trash'>('all');
+  const [showSafeSenders, setShowSafeSenders] = useState(false);
+  const [hiddenSafeCount, setHiddenSafeCount] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -133,11 +135,27 @@ export const Dashboard = () => {
     }
   };
 
-  // Filter emails based on folder selection
+  // Filter emails based on folder selection and safe sender toggle
   const filteredEmails = emails.filter(email => {
-    if (folderFilter === 'all') return true;
-    return email.folder === folderFilter;
+    // Apply folder filter
+    if (folderFilter !== 'all' && email.folder !== folderFilter) return false;
+    
+    // Apply safe sender filter (unless showing safe senders)
+    if (!showSafeSenders) {
+      const senderEmail = email.senderEmail?.toLowerCase();
+      if (senderEmail && senderFeedback[senderEmail] === false) {
+        return false;
+      }
+    }
+    
+    return true;
   });
+
+  // Count emails from safe senders
+  const safeSenderEmailCount = emails.filter(email => {
+    const senderEmail = email.senderEmail?.toLowerCase();
+    return senderEmail && senderFeedback[senderEmail] === false;
+  }).length;
 
   const spamFolderCount = emails.filter(e => e.folder === 'spam').length;
   const trashFolderCount = emails.filter(e => e.folder === 'trash').length;
@@ -151,45 +169,37 @@ export const Dashboard = () => {
 
       if (error) throw error;
 
-      // Filter out safe senders and apply learned feedback to pre-flag known spammers
+      // Apply learned feedback to pre-flag known spammers (keep all emails for toggle)
       const allEmails = data.emails || [];
       
-      // Count safe senders that will be hidden
-      const hiddenSafeSenders = allEmails.filter((email: Email) => {
+      // Count safe senders
+      const safeSenderCount = allEmails.filter((email: Email) => {
         const senderEmail = email.senderEmail?.toLowerCase();
         return senderEmail && senderFeedback[senderEmail] === false;
+      }).length;
+
+      // Process emails with feedback (keep all, filtering happens in filteredEmails)
+      const emailsWithFeedback = allEmails.map((email: Email) => {
+        const senderEmail = email.senderEmail?.toLowerCase();
+        if (senderEmail && senderFeedback[senderEmail] === true) {
+          return {
+            ...email,
+            spamConfidence: 'definitely_spam' as const,
+            aiReasoning: 'Previously marked as spam by you',
+          };
+        }
+        return email;
       });
 
-      // Filter and process emails
-      const emailsWithFeedback = allEmails
-        .filter((email: Email) => {
-          const senderEmail = email.senderEmail?.toLowerCase();
-          // Hide emails from senders marked as safe (not spam)
-          if (senderEmail && senderFeedback[senderEmail] === false) {
-            return false;
-          }
-          return true;
-        })
-        .map((email: Email) => {
-          const senderEmail = email.senderEmail?.toLowerCase();
-          if (senderEmail && senderFeedback[senderEmail] === true) {
-            return {
-              ...email,
-              spamConfidence: 'definitely_spam' as const,
-              aiReasoning: 'Previously marked as spam by you',
-            };
-          }
-          return email;
-        });
-
       setEmails(emailsWithFeedback);
+      setHiddenSafeCount(safeSenderCount);
       
       const preMarked = emailsWithFeedback.filter((e: Email) => e.spamConfidence).length;
-      const hiddenCount = hiddenSafeSenders.length;
+      const visibleCount = emailsWithFeedback.length - safeSenderCount;
       
-      let message = `Found ${emailsWithFeedback.length} emails`;
-      if (hiddenCount > 0) {
-        message += ` (${hiddenCount} from safe senders hidden)`;
+      let message = `Found ${visibleCount} emails`;
+      if (safeSenderCount > 0) {
+        message += ` (${safeSenderCount} from safe senders hidden)`;
       }
       if (preMarked > 0) {
         message += ` (${preMarked} flagged as spam)`;
@@ -731,34 +741,53 @@ export const Dashboard = () => {
             {emails.length > 0 && (
               <div className="space-y-6 animate-fade-in">
                 {/* Folder Filter Tabs */}
-                <div className="flex items-center gap-2 p-1.5 bg-white/50 backdrop-blur-sm rounded-2xl w-fit shadow-lg shadow-black/5 border border-white/50">
-                  <Button
-                    variant={folderFilter === 'all' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFolderFilter('all')}
-                    className={`gap-2 rounded-xl transition-all ${folderFilter === 'all' ? 'shadow-md' : 'hover:bg-white/50'}`}
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                    All ({emails.length})
-                  </Button>
-                  <Button
-                    variant={folderFilter === 'spam' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFolderFilter('spam')}
-                    className={`gap-2 rounded-xl transition-all ${folderFilter === 'spam' ? 'shadow-md' : 'hover:bg-white/50'}`}
-                  >
-                    <Inbox className="h-4 w-4" />
-                    Spam ({spamFolderCount})
-                  </Button>
-                  <Button
-                    variant={folderFilter === 'trash' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setFolderFilter('trash')}
-                    className={`gap-2 rounded-xl transition-all ${folderFilter === 'trash' ? 'shadow-md' : 'hover:bg-white/50'}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Trash ({trashFolderCount})
-                  </Button>
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-2 p-1.5 bg-white/50 backdrop-blur-sm rounded-2xl w-fit shadow-lg shadow-black/5 border border-white/50">
+                    <Button
+                      variant={folderFilter === 'all' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setFolderFilter('all')}
+                      className={`gap-2 rounded-xl transition-all ${folderFilter === 'all' ? 'shadow-md' : 'hover:bg-white/50'}`}
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      All ({filteredEmails.length})
+                    </Button>
+                    <Button
+                      variant={folderFilter === 'spam' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setFolderFilter('spam')}
+                      className={`gap-2 rounded-xl transition-all ${folderFilter === 'spam' ? 'shadow-md' : 'hover:bg-white/50'}`}
+                    >
+                      <Inbox className="h-4 w-4" />
+                      Spam ({spamFolderCount})
+                    </Button>
+                    <Button
+                      variant={folderFilter === 'trash' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setFolderFilter('trash')}
+                      className={`gap-2 rounded-xl transition-all ${folderFilter === 'trash' ? 'shadow-md' : 'hover:bg-white/50'}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Trash ({trashFolderCount})
+                    </Button>
+                  </div>
+
+                  {/* Safe Senders Toggle */}
+                  {safeSenderEmailCount > 0 && (
+                    <Button
+                      variant={showSafeSenders ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setShowSafeSenders(!showSafeSenders)}
+                      className={`gap-2 rounded-xl transition-all ${
+                        showSafeSenders 
+                          ? 'bg-success text-success-foreground hover:bg-success/90' 
+                          : 'border-success/30 text-success hover:bg-success/10'
+                      }`}
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      {showSafeSenders ? 'Showing' : 'Show'} Safe ({safeSenderEmailCount})
+                    </Button>
+                  )}
                 </div>
 
                 {/* Email List with glass container */}
