@@ -652,9 +652,7 @@ export const Dashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            {gmailConnected && (
-              <GmailConnect onConnected={() => setGmailConnected(true)} />
-            )}
+            <GmailConnect onConnected={() => setGmailConnected(true)} />
             <div className="flex items-center gap-2 sm:gap-3 bg-white/50 backdrop-blur-sm rounded-full px-2 sm:px-4 py-1.5 sm:py-2">
               <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-white shadow-md">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
