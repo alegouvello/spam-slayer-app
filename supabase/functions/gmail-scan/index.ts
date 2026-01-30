@@ -226,7 +226,7 @@ serve(async (req) => {
     }
 
     const { action } = await req.json();
-    console.log(`Processing action: ${action} for user: ${user.id}`);
+    console.log(`Processing action: ${action}`);
 
     if (action === 'check_connection') {
       const accessToken = await getValidAccessToken(supabase, user.id);

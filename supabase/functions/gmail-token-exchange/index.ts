@@ -122,7 +122,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Gmail tokens encrypted and stored successfully for user:', user.id);
+    console.log('Gmail tokens encrypted and stored successfully');
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

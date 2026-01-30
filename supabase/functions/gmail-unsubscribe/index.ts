@@ -148,7 +148,7 @@ serve(async (req) => {
     }
 
     const { emailId, method, sender, subject, spamConfidence, aiReasoning } = await req.json();
-    console.log(`Processing unsubscribe for email ${emailId} using method: ${method}`);
+    console.log(`Processing unsubscribe using method: ${method}`);
 
     // Get valid Gmail access token
     const accessToken = await getValidAccessToken(supabase, user.id);

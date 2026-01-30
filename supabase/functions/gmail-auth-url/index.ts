@@ -86,7 +86,7 @@ serve(async (req) => {
     // State is optional here; we rely on the app session when exchanging the code.
     authUrl.searchParams.set('state', crypto.randomUUID());
 
-    console.log('Generated Gmail auth URL for user:', user.id);
+    console.log('Generated Gmail auth URL');
 
     return new Response(JSON.stringify({ url: authUrl.toString() }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
