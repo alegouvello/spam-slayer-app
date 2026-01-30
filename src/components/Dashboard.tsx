@@ -639,19 +639,19 @@ export const Dashboard = () => {
 
       {/* Header */}
       <header className="border-b border-white/20 bg-white/40 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-              <Mail className="h-5 w-5 text-primary-foreground" />
+        <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+              <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
             <div>
-              <span className="font-semibold text-lg">Spam Slayer</span>
-              <span className="text-xs text-muted-foreground block -mt-0.5">Clean inbox, clear mind</span>
+              <span className="font-semibold text-base sm:text-lg">Spam Slayer</span>
+              <span className="text-xs text-muted-foreground hidden sm:block -mt-0.5">Clean inbox, clear mind</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm rounded-full px-4 py-2">
-              <Avatar className="h-8 w-8 ring-2 ring-white shadow-md">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 bg-white/50 backdrop-blur-sm rounded-full px-2 sm:px-4 py-1.5 sm:py-2">
+              <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-white shadow-md">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
                 <AvatarFallback className="text-xs bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-medium">
                   {user?.email?.charAt(0).toUpperCase()}
@@ -659,7 +659,7 @@ export const Dashboard = () => {
               </Avatar>
               <span className="text-sm font-medium hidden md:inline">{user?.email}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground hover:bg-white/50 transition-all rounded-full">
+            <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-foreground hover:bg-white/50 transition-all rounded-full">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -667,34 +667,34 @@ export const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-12 max-w-5xl">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12 max-w-5xl">
         {/* Hero Section */}
-        <div className="mb-12 animate-fade-in">
-          <div className="inline-flex items-center gap-2 bg-primary/10 backdrop-blur-sm text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-            <Sparkles className="h-4 w-4" />
+        <div className="mb-8 sm:mb-12 animate-fade-in">
+          <div className="inline-flex items-center gap-2 bg-primary/10 backdrop-blur-sm text-primary px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
+            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
             AI-Powered Cleanup
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
             Welcome back
           </h1>
-          <p className="text-lg text-muted-foreground max-w-md">
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-md">
             Take control of your inbox. Scan, analyze, and eliminate spam in seconds.
           </p>
         </div>
 
-        <Tabs defaultValue="cleanup" className="space-y-8">
-          <TabsList className="bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl w-fit shadow-lg shadow-black/5 border border-white/50">
-            <TabsTrigger value="cleanup" className="gap-2 rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
-              <Trash2 className="h-4 w-4" />
-              Cleanup
+        <Tabs defaultValue="cleanup" className="space-y-6 sm:space-y-8">
+          <TabsList className="bg-white/50 backdrop-blur-sm p-1 sm:p-1.5 rounded-xl sm:rounded-2xl w-full sm:w-fit shadow-lg shadow-black/5 border border-white/50 grid grid-cols-3 sm:flex">
+            <TabsTrigger value="cleanup" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
+              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Cleanup</span>
             </TabsTrigger>
-            <TabsTrigger value="senders" className="gap-2 rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
-              <Users className="h-4 w-4" />
-              Learned
+            <TabsTrigger value="senders" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Learned</span>
             </TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-2 rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
-              <Clock className="h-4 w-4" />
-              Schedule
+            <TabsTrigger value="schedule" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Schedule</span>
             </TabsTrigger>
           </TabsList>
 
@@ -708,33 +708,33 @@ export const Dashboard = () => {
             {/* Actions Card */}
             <Card className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-xl shadow-black/5 overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-              <CardHeader className="pb-4 relative">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                    <Inbox className="h-6 w-6 text-primary" />
+              <CardHeader className="pb-3 sm:pb-4 relative px-4 sm:px-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Inbox className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl font-semibold">Spam & Trash</CardTitle>
-                    <CardDescription className="text-sm">
+                    <CardTitle className="text-lg sm:text-xl font-semibold">Spam & Trash</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
                       Scan, review, and clean up unwanted emails
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4 relative">
-                <div className="flex flex-wrap gap-3">
+              <CardContent className="space-y-4 relative px-4 sm:px-6">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   <Button 
                     onClick={handleScanSpam} 
                     disabled={isScanning}
-                    size="lg"
-                    className="gap-2 rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                    size="default"
+                    className="gap-2 rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all text-sm sm:text-base h-9 sm:h-11 px-3 sm:px-4"
                   >
                     {isScanning ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
                       <Scan className="h-4 w-4" />
                     )}
-                    {isScanning ? 'Scanning...' : 'Scan Emails'}
+                    {isScanning ? 'Scanning...' : 'Scan'}
                   </Button>
 
                   {emails.length > 0 && (
@@ -743,8 +743,8 @@ export const Dashboard = () => {
                         variant="secondary"
                         onClick={handleAnalyze} 
                         disabled={isAnalyzing}
-                        size="lg"
-                        className="gap-2 rounded-xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 hover:from-violet-500/20 hover:to-purple-500/20 border border-violet-500/20"
+                        size="default"
+                        className="gap-2 rounded-xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 hover:from-violet-500/20 hover:to-purple-500/20 border border-violet-500/20 text-sm sm:text-base h-9 sm:h-11 px-3 sm:px-4"
                       >
                         {isAnalyzing ? (
                           <RefreshCw className="h-4 w-4 animate-spin" />
@@ -759,15 +759,16 @@ export const Dashboard = () => {
                           variant="destructive"
                           onClick={requestCleanAllSpam}
                           disabled={isProcessing}
-                          size="lg"
-                          className="gap-2 rounded-xl shadow-lg shadow-destructive/20"
+                          size="default"
+                          className="gap-2 rounded-xl shadow-lg shadow-destructive/20 text-sm sm:text-base h-9 sm:h-11 px-3 sm:px-4"
                         >
                           {isProcessing ? (
                             <RefreshCw className="h-4 w-4 animate-spin" />
                           ) : (
                             <Trash2 className="h-4 w-4" />
                           )}
-                          {isProcessing ? 'Cleaning...' : `Clean All Spam (${spamCount})`}
+                          <span className="hidden sm:inline">{isProcessing ? 'Cleaning...' : `Clean All Spam (${spamCount})`}</span>
+                          <span className="sm:hidden">{isProcessing ? '...' : `Clean (${spamCount})`}</span>
                         </Button>
                       )}
 
@@ -777,29 +778,31 @@ export const Dashboard = () => {
                             variant="outline"
                             onClick={requestProcess} 
                             disabled={isProcessing}
-                            size="lg"
-                            className="gap-2 rounded-xl border-2"
+                            size="default"
+                            className="gap-2 rounded-xl border-2 text-sm sm:text-base h-9 sm:h-11 px-3 sm:px-4"
                           >
                             {isProcessing ? (
                               <RefreshCw className="h-4 w-4 animate-spin" />
                             ) : (
                               <CheckCircle2 className="h-4 w-4" />
                             )}
-                            Process Selected ({selectedCount})
+                            <span className="hidden sm:inline">Process ({selectedCount})</span>
+                            <span className="sm:hidden">({selectedCount})</span>
                           </Button>
                           <Button 
                             variant="outline"
                             onClick={handleBulkMarkNotSpam} 
                             disabled={isProcessing}
-                            size="lg"
-                            className="gap-2 rounded-xl border-2 border-success/30 text-success hover:bg-success/10 hover:text-success"
+                            size="default"
+                            className="gap-2 rounded-xl border-2 border-success/30 text-success hover:bg-success/10 hover:text-success text-sm sm:text-base h-9 sm:h-11 px-3 sm:px-4"
                           >
                             {isProcessing ? (
                               <RefreshCw className="h-4 w-4 animate-spin" />
                             ) : (
                               <ShieldCheck className="h-4 w-4" />
                             )}
-                            Not Spam ({selectedCount})
+                            <span className="hidden sm:inline">Not Spam ({selectedCount})</span>
+                            <span className="sm:hidden">Safe</span>
                           </Button>
                         </>
                       )}
@@ -811,35 +814,35 @@ export const Dashboard = () => {
 
             {/* Folder Filter & Email List */}
             {emails.length > 0 && (
-              <div className="space-y-6 animate-fade-in">
+              <div className="space-y-4 sm:space-y-6 animate-fade-in">
                 {/* Folder Filter Tabs */}
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-2 p-1.5 bg-white/50 backdrop-blur-sm rounded-2xl w-fit shadow-lg shadow-black/5 border border-white/50">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-1 sm:gap-2 p-1 sm:p-1.5 bg-white/50 backdrop-blur-sm rounded-xl sm:rounded-2xl w-full sm:w-fit shadow-lg shadow-black/5 border border-white/50">
                     <Button
                       variant={folderFilter === 'all' ? 'default' : 'ghost'}
                       size="sm"
                       onClick={() => setFolderFilter('all')}
-                      className={`gap-2 rounded-xl transition-all ${folderFilter === 'all' ? 'shadow-md' : 'hover:bg-white/50'}`}
+                      className={`gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all flex-1 sm:flex-none text-xs sm:text-sm h-8 sm:h-9 ${folderFilter === 'all' ? 'shadow-md' : 'hover:bg-white/50'}`}
                     >
-                      <FolderOpen className="h-4 w-4" />
+                      <FolderOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       All ({filteredEmails.length})
                     </Button>
                     <Button
                       variant={folderFilter === 'spam' ? 'default' : 'ghost'}
                       size="sm"
                       onClick={() => setFolderFilter('spam')}
-                      className={`gap-2 rounded-xl transition-all ${folderFilter === 'spam' ? 'shadow-md' : 'hover:bg-white/50'}`}
+                      className={`gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all flex-1 sm:flex-none text-xs sm:text-sm h-8 sm:h-9 ${folderFilter === 'spam' ? 'shadow-md' : 'hover:bg-white/50'}`}
                     >
-                      <Inbox className="h-4 w-4" />
+                      <Inbox className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       Spam ({spamFolderCount})
                     </Button>
                     <Button
                       variant={folderFilter === 'trash' ? 'default' : 'ghost'}
                       size="sm"
                       onClick={() => setFolderFilter('trash')}
-                      className={`gap-2 rounded-xl transition-all ${folderFilter === 'trash' ? 'shadow-md' : 'hover:bg-white/50'}`}
+                      className={`gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all flex-1 sm:flex-none text-xs sm:text-sm h-8 sm:h-9 ${folderFilter === 'trash' ? 'shadow-md' : 'hover:bg-white/50'}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       Trash ({trashFolderCount})
                     </Button>
                   </div>

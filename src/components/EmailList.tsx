@@ -63,31 +63,31 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
 
   return (
     <Card className="border bg-background/60 backdrop-blur-sm border-border/50">
-      <CardHeader className="flex flex-row items-center justify-between pb-4">
-        <CardTitle className="text-lg font-medium flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <Mail className="h-4 w-4 text-primary" />
+      <CardHeader className="flex flex-row items-center justify-between pb-3 sm:pb-4 px-4 sm:px-6">
+        <CardTitle className="text-base sm:text-lg font-medium flex items-center gap-2 sm:gap-3">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
           </div>
           <span>Emails ({emails.length})</span>
         </CardTitle>
-        <Button variant="ghost" size="sm" onClick={onSelectAll} className="text-xs hover:bg-primary/10">
-          {allSelected ? 'Deselect All' : 'Select All'}
+        <Button variant="ghost" size="sm" onClick={onSelectAll} className="text-xs hover:bg-primary/10 h-8 px-2 sm:px-3">
+          {allSelected ? 'Deselect' : 'Select All'}
         </Button>
       </CardHeader>
-      <CardContent className="pt-0">
-        <ScrollArea className="h-[480px]">
+      <CardContent className="pt-0 px-3 sm:px-6">
+        <ScrollArea className="h-[400px] sm:h-[480px]">
           <div className="space-y-2">
             {emails.map((email, index) => (
               <div 
                 key={email.id}
-                className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
+                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all duration-200 hover:shadow-md ${
                   email.selected 
                     ? 'bg-primary/5 border-primary/30 shadow-sm' 
                     : 'bg-background/80 hover:bg-background border-transparent hover:border-border/50'
                 }`}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2 sm:gap-3">
                   <Checkbox 
                     checked={email.selected}
                     onCheckedChange={() => onSelect(email.id)}
@@ -97,13 +97,13 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
                     className="flex-1 min-w-0 cursor-pointer"
                     onClick={() => onPreview(email)}
                   >
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-medium text-sm truncate">{email.sender}</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1">
+                      <span className="font-medium text-xs sm:text-sm truncate max-w-[150px] sm:max-w-none">{email.sender}</span>
                       {safeSenders?.has(email.senderEmail.toLowerCase()) && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge className="gap-1 text-xs font-normal bg-success/15 text-success border-success/30">
-                              <ShieldCheck className="h-3 w-3" /> Safe
+                            <Badge className="gap-0.5 sm:gap-1 text-[10px] sm:text-xs font-normal bg-success/15 text-success border-success/30 px-1.5 sm:px-2">
+                              <ShieldCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> <span className="hidden sm:inline">Safe</span>
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -114,8 +114,8 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
                       {email.hasListUnsubscribe && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge variant="outline" className="gap-1 text-xs font-normal text-primary border-primary/30 bg-primary/5">
-                              <Zap className="h-3 w-3" /> Auto
+                            <Badge variant="outline" className="gap-0.5 sm:gap-1 text-[10px] sm:text-xs font-normal text-primary border-primary/30 bg-primary/5 px-1.5 sm:px-2">
+                              <Zap className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> <span className="hidden sm:inline">Auto</span>
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -126,8 +126,8 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
                       {email.unsubscribeLink && !email.hasListUnsubscribe && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge variant="outline" className="gap-1 text-xs font-normal">
-                              <ExternalLink className="h-3 w-3" /> Web
+                            <Badge variant="outline" className="gap-0.5 sm:gap-1 text-[10px] sm:text-xs font-normal px-1.5 sm:px-2">
+                              <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> <span className="hidden sm:inline">Web</span>
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -136,36 +136,36 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
                         </Tooltip>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate mb-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate mb-1.5 sm:mb-2">
                       {email.subject}
                     </p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">
                         {new Date(email.date).toLocaleDateString()}
                       </span>
                       {getConfidenceBadge(email.spamConfidence)}
                       {getStatusBadge(email.unsubscribeStatus)}
                     </div>
                     {email.aiReasoning && (
-                      <p className="text-xs text-muted-foreground mt-2 italic line-clamp-1 bg-accent/30 rounded-lg px-2 py-1">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 italic line-clamp-1 bg-accent/30 rounded-md sm:rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1">
                         ✨ "{email.aiReasoning}"
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                     {onMarkNotSpam && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               onMarkNotSpam(email);
                             }}
                           >
-                            <ShieldCheck className="h-4 w-4" />
+                            <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Not Spam</TooltipContent>
@@ -176,13 +176,13 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             onPreview(email);
                           }}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Preview</TooltipContent>
@@ -192,13 +192,13 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             onRemove(email.id);
                           }}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Remove</TooltipContent>

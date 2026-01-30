@@ -63,22 +63,22 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         {cards.map((card, index) => (
           <Card 
             key={card.title} 
             className={`border bg-background/60 backdrop-blur-sm ${card.borderColor} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
             style={{ animationDelay: `${index * 100}ms` }}
           >
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-2.5 rounded-xl ${card.bgColor}`}>
-                  <card.icon className={`h-4 w-4 ${card.color}`} />
+            <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+              <div className="flex items-center justify-between mb-2 sm:mb-4">
+                <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl ${card.bgColor}`}>
+                  <card.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${card.color}`} />
                 </div>
               </div>
-              <p className="text-3xl font-medium mb-1">{card.value}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">{card.title}</p>
+              <p className="text-2xl sm:text-3xl font-medium mb-0.5 sm:mb-1">{card.value}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">{card.title}</p>
             </CardContent>
           </Card>
         ))}
