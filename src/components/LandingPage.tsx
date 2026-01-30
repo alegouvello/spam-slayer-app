@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { lovable } from '@/integrations/lovable';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import heroVideo from '@/assets/hero-video.mp4';
 
@@ -223,14 +224,30 @@ export const LandingPage = () => {
 
       {/* Footer */}
       <footer className="py-6 sm:py-8 border-t bg-background/90 backdrop-blur-sm">
-        <div className="container mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-          <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Spam Cleanup</span>
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Spam Slayer</span>
+            </div>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Link 
+                to="/terms" 
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <Link 
+                to="/privacy" 
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Privacy Policy
+              </Link>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Spam Slayer
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Simple email management
-          </p>
         </div>
       </footer>
     </div>
