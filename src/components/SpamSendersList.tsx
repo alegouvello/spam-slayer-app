@@ -21,7 +21,8 @@ import {
   ShieldX,
   RefreshCw,
   Mail,
-  Plus
+  Plus,
+  Search
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -49,6 +50,7 @@ export const SpamSendersList = () => {
   const [newSenderName, setNewSenderName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   useEffect(() => {
     loadSenders();
   }, []);
@@ -162,6 +164,16 @@ export const SpamSendersList = () => {
       setIsAdding(false);
     }
   };
+
+  // Filter senders based on search query
+  const filteredSenders = senders.filter(sender => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      sender.sender_email.toLowerCase().includes(query) ||
+      (sender.sender_name?.toLowerCase().includes(query) ?? false)
+    );
+  });
 
   const spamCount = senders.filter(s => s.marked_as_spam).length;
   const safeCount = senders.filter(s => !s.marked_as_spam).length;
@@ -300,9 +312,28 @@ export const SpamSendersList = () => {
             </p>
           </div>
         ) : (
-          <ScrollArea className="h-[300px] pr-4">
-            <div className="space-y-2">
-              {senders.map((sender) => (
+          <div className="space-y-4">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search senders..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 rounded-xl bg-white/50"
+              />
+            </div>
+
+            {filteredSenders.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground">
+                  No senders match "{searchQuery}"
+                </p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[260px] pr-4">
+                <div className="space-y-2">
+                  {filteredSenders.map((sender) => (
                 <div 
                   key={sender.id}
                   className={`flex items-center justify-between p-3 rounded-xl transition-all ${
@@ -359,6 +390,8 @@ export const SpamSendersList = () => {
               ))}
             </div>
           </ScrollArea>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
