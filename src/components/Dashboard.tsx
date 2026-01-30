@@ -708,8 +708,7 @@ export const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="cleanup" className="space-y-8 animate-fade-in">
-            {/* Gmail Connection */}
-            <GmailConnect onConnected={() => setGmailConnected(true)} />
+            {/* Stats */}
 
             {/* Stats */}
             <StatsCards stats={stats} />
