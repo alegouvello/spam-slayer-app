@@ -164,38 +164,52 @@ async function processUserCleanup(
     return { processed: 0, deleted: 0 };
   }
 
-  const [spamMessages, trashMessages] = await Promise.all([
-    fetchMessagesFromLabel(accessToken, 'SPAM'),
-    fetchMessagesFromLabel(accessToken, 'TRASH'),
-  ]);
+  // Get emails that were previously flagged as spam by the app but not yet deleted
+  const { data: flaggedEmails, error: historyError } = await supabase
+    .from('cleanup_history')
+    .select('email_id')
+    .eq('user_id', schedule.user_id)
+    .eq('deleted', false)
+    .in('spam_confidence', ['definitely_spam', 'likely_spam']);
 
-  const allMessageIds = [...spamMessages, ...trashMessages]
-    .map((m) => m.id)
-    .filter((id, idx, arr) => arr.indexOf(id) === idx);
+  if (historyError) {
+    console.error('Error fetching flagged emails:', historyError);
+    return { processed: 0, deleted: 0 };
+  }
 
-  console.log(
-    `Found ${spamMessages.length} spam + ${trashMessages.length} trash (${allMessageIds.length} unique) for user ${schedule.user_id}`
-  );
+  const emailIdsToDelete = (flaggedEmails || []).map((e: any) => e.email_id);
+  console.log(`Found ${emailIdsToDelete.length} flagged spam emails to delete for user ${schedule.user_id}`);
+
+  if (emailIdsToDelete.length === 0) {
+    // Also fetch current spam folder for new spam
+    const spamMessages = await fetchMessagesFromLabel(accessToken, 'SPAM');
+    console.log(`Found ${spamMessages.length} new spam messages in folder`);
+    
+    // Update schedule timestamps even if nothing to delete
+    await supabase.from('scheduled_cleanup').update({
+      last_run_at: new Date().toISOString(),
+      next_run_at: calculateNextRun(schedule.frequency),
+    }).eq('id', schedule.id);
+    
+    return { processed: spamMessages.length, deleted: 0 };
+  }
 
   let deleted = 0;
 
   if (schedule.auto_approve) {
-    // Auto-delete spam + trash messages permanently
-    for (const emailId of allMessageIds) {
+    // Delete only flagged spam emails
+    for (const emailId of emailIdsToDelete) {
       const success = await deleteEmailFromGmail(accessToken, emailId);
       if (success) {
         deleted++;
-        // Log to cleanup history
-        await supabase.from('cleanup_history').insert({
-          user_id: schedule.user_id,
-          email_id: emailId,
-          unsubscribe_method: 'scheduled_auto',
-          unsubscribe_status: 'success',
-          deleted: true,
-        });
+        // Update cleanup history to mark as deleted
+        await supabase.from('cleanup_history')
+          .update({ deleted: true })
+          .eq('user_id', schedule.user_id)
+          .eq('email_id', emailId);
       }
     }
-    console.log(`Deleted ${deleted} spam/trash emails for user ${schedule.user_id}`);
+    console.log(`Deleted ${deleted} flagged spam emails for user ${schedule.user_id}`);
   } else {
     console.log(`User ${schedule.user_id} has auto_approve disabled, skipping deletion`);
   }
@@ -206,7 +220,7 @@ async function processUserCleanup(
     next_run_at: calculateNextRun(schedule.frequency),
   }).eq('id', schedule.id);
 
-  return { processed: allMessageIds.length, deleted };
+  return { processed: emailIdsToDelete.length, deleted };
 }
 
 serve(async (req) => {

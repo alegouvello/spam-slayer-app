@@ -147,7 +147,7 @@ serve(async (req) => {
       });
     }
 
-    const { emailId, method, sender, subject } = await req.json();
+    const { emailId, method, sender, subject, spamConfidence, aiReasoning } = await req.json();
     console.log(`Processing unsubscribe for email ${emailId} using method: ${method}`);
 
     // Get valid Gmail access token
@@ -177,6 +177,8 @@ serve(async (req) => {
         email_id: emailId,
         sender: sender || null,
         subject: subject || null,
+        spam_confidence: spamConfidence || null,
+        ai_reasoning: aiReasoning || null,
         unsubscribe_method: 'auto_header',
         unsubscribe_status: 'success',
         deleted: deleted,
@@ -205,6 +207,8 @@ serve(async (req) => {
         email_id: emailId,
         sender: sender || null,
         subject: subject || null,
+        spam_confidence: spamConfidence || null,
+        ai_reasoning: aiReasoning || null,
         unsubscribe_method: 'delete_only',
         unsubscribe_status: deleted ? 'success' : 'failed',
         deleted: deleted,
