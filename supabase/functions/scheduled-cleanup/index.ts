@@ -87,13 +87,16 @@ async function getValidAccessToken(supabase: any, userId: string): Promise<strin
   }
 }
 
-async function fetchSpamMessages(accessToken: string): Promise<Array<{ id: string }>> {
+async function fetchMessagesFromLabel(
+  accessToken: string,
+  labelId: 'SPAM' | 'TRASH',
+): Promise<Array<{ id: string }>> {
   const allMessages: Array<{ id: string }> = [];
   let pageToken: string | null = null;
 
   do {
     const url = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
-    url.searchParams.set('labelIds', 'SPAM');
+    url.searchParams.set('labelIds', labelId);
     url.searchParams.set('maxResults', '100');
     if (pageToken) {
       url.searchParams.set('pageToken', pageToken);
@@ -104,7 +107,7 @@ async function fetchSpamMessages(accessToken: string): Promise<Array<{ id: strin
     });
 
     if (!response.ok) {
-      console.error('Failed to fetch spam messages:', await response.json());
+      console.error(`Failed to fetch ${labelId} messages:`, await response.json());
       break;
     }
 
@@ -161,28 +164,38 @@ async function processUserCleanup(
     return { processed: 0, deleted: 0 };
   }
 
-  const spamMessages = await fetchSpamMessages(accessToken);
-  console.log(`Found ${spamMessages.length} spam messages for user ${schedule.user_id}`);
+  const [spamMessages, trashMessages] = await Promise.all([
+    fetchMessagesFromLabel(accessToken, 'SPAM'),
+    fetchMessagesFromLabel(accessToken, 'TRASH'),
+  ]);
+
+  const allMessageIds = [...spamMessages, ...trashMessages]
+    .map((m) => m.id)
+    .filter((id, idx, arr) => arr.indexOf(id) === idx);
+
+  console.log(
+    `Found ${spamMessages.length} spam + ${trashMessages.length} trash (${allMessageIds.length} unique) for user ${schedule.user_id}`
+  );
 
   let deleted = 0;
 
   if (schedule.auto_approve) {
-    // Auto-delete all spam messages
-    for (const msg of spamMessages) {
-      const success = await deleteEmailFromGmail(accessToken, msg.id);
+    // Auto-delete spam + trash messages permanently
+    for (const emailId of allMessageIds) {
+      const success = await deleteEmailFromGmail(accessToken, emailId);
       if (success) {
         deleted++;
         // Log to cleanup history
         await supabase.from('cleanup_history').insert({
           user_id: schedule.user_id,
-          email_id: msg.id,
+          email_id: emailId,
           unsubscribe_method: 'scheduled_auto',
           unsubscribe_status: 'success',
           deleted: true,
         });
       }
     }
-    console.log(`Deleted ${deleted} spam emails for user ${schedule.user_id}`);
+    console.log(`Deleted ${deleted} spam/trash emails for user ${schedule.user_id}`);
   } else {
     console.log(`User ${schedule.user_id} has auto_approve disabled, skipping deletion`);
   }
@@ -193,7 +206,7 @@ async function processUserCleanup(
     next_run_at: calculateNextRun(schedule.frequency),
   }).eq('id', schedule.id);
 
-  return { processed: spamMessages.length, deleted };
+  return { processed: allMessageIds.length, deleted };
 }
 
 serve(async (req) => {
