@@ -2,7 +2,7 @@ import { Mail, Trash2, Zap, Shield, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { lovable } from '@/integrations/lovable';
 import { useState } from 'react';
-import heroBg from '@/assets/hero-bg.jpg';
+import heroVideo from '@/assets/hero-video.mp4';
 
 export const LandingPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -50,13 +50,18 @@ export const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-60"
-          style={{ backgroundImage: `url(${heroBg})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
+      <div className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center overflow-hidden">
+        {/* Background Video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-50"
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
         
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-2xl">
