@@ -309,7 +309,8 @@ export const Dashboard = () => {
               sender: email.sender,
               subject: email.subject,
               spamConfidence: email.spamConfidence,
-              aiReasoning: email.aiReasoning
+              aiReasoning: email.aiReasoning,
+              accountId: email.accountId
             }
           });
 
@@ -338,7 +339,8 @@ export const Dashboard = () => {
               sender: email.sender,
               subject: email.subject,
               spamConfidence: email.spamConfidence,
-              aiReasoning: email.aiReasoning
+              aiReasoning: email.aiReasoning,
+              accountId: email.accountId
             }
           });
           
@@ -362,7 +364,8 @@ export const Dashboard = () => {
               sender: email.sender,
               subject: email.subject,
               spamConfidence: email.spamConfidence,
-              aiReasoning: email.aiReasoning
+              aiReasoning: email.aiReasoning,
+              accountId: email.accountId
             }
           });
           
@@ -474,7 +477,8 @@ export const Dashboard = () => {
               sender: email.sender,
               subject: email.subject,
               spamConfidence: email.spamConfidence,
-              aiReasoning: email.aiReasoning
+              aiReasoning: email.aiReasoning,
+              accountId: email.accountId
             }
           });
 
@@ -574,7 +578,8 @@ export const Dashboard = () => {
             emailId: email.id, 
             method: 'header',
             sender: email.sender,
-            subject: email.subject
+            subject: email.subject,
+            accountId: email.accountId
           }
         });
 
