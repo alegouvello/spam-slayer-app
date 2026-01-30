@@ -28,10 +28,10 @@ import { StatsCards } from './StatsCards';
 import { GmailConnect } from './GmailConnect';
 import { SpamSendersList } from './SpamSendersList';
 import { CleanupHistory } from './CleanupHistory';
+import { SeamlessVideo } from './SeamlessVideo';
 import { Email, CleanupStats } from '@/types/email';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import dashboardBg from '@/assets/dashboard-bg.jpg';
 
 export const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -629,45 +629,37 @@ export const Dashboard = () => {
     }
   };
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Beautiful Background */}
-      <div 
-        className="fixed inset-0 bg-cover bg-center -z-20"
-        style={{ backgroundImage: `url(${dashboardBg})` }}
-      />
+    <div className="min-h-screen relative isolate overflow-hidden">
+      {/* Seamless Video Background */}
+      <SeamlessVideo />
       
       {/* Gradient Overlay for readability */}
-      <div className="fixed inset-0 bg-gradient-to-br from-background/70 via-background/50 to-background/80 -z-10" />
-      
-      {/* Decorative floating orbs */}
-      <div className="fixed top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse -z-10" />
-      <div className="fixed bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse -z-10" style={{ animationDelay: '1s' }} />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-primary/10 to-success/10 rounded-full blur-3xl -z-10" />
+      <div className="fixed inset-0 bg-gradient-to-br from-background/60 via-background/40 to-background/70 z-0" />
 
       {/* Header */}
-      <header className="border-b border-white/20 bg-white/40 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
+      <header className="relative border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
               <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
             <div>
-              <span className="font-semibold text-base sm:text-lg">Spam Slayer</span>
+              <span className="font-semibold text-base sm:text-lg text-foreground">Spam Slayer</span>
               <span className="text-xs text-muted-foreground hidden sm:block -mt-0.5">Clean inbox, clear mind</span>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <GmailConnect onConnected={() => setGmailConnected(true)} />
-            <div className="flex items-center gap-2 sm:gap-3 bg-white/50 backdrop-blur-sm rounded-full px-2 sm:px-4 py-1.5 sm:py-2">
-              <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-white shadow-md">
+            <div className="flex items-center gap-2 sm:gap-3 bg-background/70 backdrop-blur-sm rounded-full px-2 sm:px-4 py-1.5 sm:py-2 border border-border/50">
+              <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-background shadow-md">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
                 <AvatarFallback className="text-xs bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-medium">
                   {user?.email?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium hidden md:inline">{user?.email}</span>
+              <span className="text-sm font-medium text-foreground hidden md:inline">{user?.email}</span>
             </div>
-            <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-foreground hover:bg-white/50 transition-all rounded-full">
+            <Button variant="outline" size="icon" onClick={signOut} className="h-8 w-8 sm:h-9 sm:w-9 rounded-full border-border/50 bg-background/70 backdrop-blur-sm hover:bg-background transition-all">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -675,7 +667,7 @@ export const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12 max-w-5xl">
+      <main className="relative container mx-auto px-4 sm:px-6 py-6 sm:py-12 max-w-5xl z-10">
         {/* Hero Section */}
         <div className="mb-8 sm:mb-12 animate-fade-in">
           <div className="inline-flex items-center gap-2 bg-primary/10 backdrop-blur-sm text-primary px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
