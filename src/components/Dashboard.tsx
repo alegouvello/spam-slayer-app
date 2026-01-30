@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
+import { CleanupConfirmDialog } from './CleanupConfirmDialog';
 import { ScheduleSettings } from './ScheduleSettings';
 import { StatsCards } from './StatsCards';
 import { GmailConnect } from './GmailConnect';
@@ -52,6 +53,9 @@ export const Dashboard = () => {
     webLinksOpened: 0,
     autoUnsubscribes: 0,
   });
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogType, setConfirmDialogType] = useState<'selected' | 'all-spam'>('selected');
+  const [pendingCleanupCount, setPendingCleanupCount] = useState(0);
 
   // Load stats from cleanup history and sender feedback on mount
   useEffect(() => {
@@ -259,13 +263,27 @@ export const Dashboard = () => {
     }
   };
 
-  const handleCleanAllSpam = async () => {
+  const requestCleanAllSpam = () => {
     const spamEmails = emails.filter(e => 
       e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
     );
     
     if (spamEmails.length === 0) {
       toast.error('No spam emails found. Run AI Analyze first.');
+      return;
+    }
+
+    setPendingCleanupCount(spamEmails.length);
+    setConfirmDialogType('all-spam');
+    setConfirmDialogOpen(true);
+  };
+
+  const handleCleanAllSpam = async () => {
+    const spamEmails = emails.filter(e => 
+      e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
+    );
+    
+    if (spamEmails.length === 0) {
       return;
     }
 
@@ -384,10 +402,21 @@ export const Dashboard = () => {
     ));
   };
 
-  const handleProcess = async () => {
+  const requestProcess = () => {
     const selectedEmails = emails.filter(e => e.selected);
     if (selectedEmails.length === 0) {
       toast.error('Please select emails to process');
+      return;
+    }
+
+    setPendingCleanupCount(selectedEmails.length);
+    setConfirmDialogType('selected');
+    setConfirmDialogOpen(true);
+  };
+
+  const handleProcess = async () => {
+    const selectedEmails = emails.filter(e => e.selected);
+    if (selectedEmails.length === 0) {
       return;
     }
 
@@ -549,6 +578,14 @@ export const Dashboard = () => {
       .filter(([_, isSpam]) => isSpam === false)
       .map(([email]) => email)
   );
+
+  const handleConfirmCleanup = () => {
+    if (confirmDialogType === 'all-spam') {
+      handleCleanAllSpam();
+    } else {
+      handleProcess();
+    }
+  };
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Beautiful Background */}
@@ -685,7 +722,7 @@ export const Dashboard = () => {
                       {spamCount > 0 && (
                         <Button 
                           variant="destructive"
-                          onClick={handleCleanAllSpam}
+                          onClick={requestCleanAllSpam}
                           disabled={isProcessing}
                           size="lg"
                           className="gap-2 rounded-xl shadow-lg shadow-destructive/20"
@@ -703,7 +740,7 @@ export const Dashboard = () => {
                         <>
                           <Button 
                             variant="outline"
-                            onClick={handleProcess} 
+                            onClick={requestProcess} 
                             disabled={isProcessing}
                             size="lg"
                             className="gap-2 rounded-xl border-2"
@@ -825,6 +862,15 @@ export const Dashboard = () => {
               onOpenChange={setPreviewOpen}
               onRemove={handleRemoveEmail}
               onUnsubscribe={handleUnsubscribeFromPreview}
+            />
+
+            {/* Cleanup Confirmation Dialog */}
+            <CleanupConfirmDialog
+              open={confirmDialogOpen}
+              onOpenChange={setConfirmDialogOpen}
+              onConfirm={handleConfirmCleanup}
+              emailCount={pendingCleanupCount}
+              type={confirmDialogType}
             />
           </TabsContent>
 
