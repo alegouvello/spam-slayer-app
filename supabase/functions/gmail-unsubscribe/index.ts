@@ -72,24 +72,49 @@ async function getValidAccessToken(supabase: any, userId: string): Promise<strin
   }
 }
 
-async function deleteEmailFromGmail(accessToken: string, emailId: string): Promise<boolean> {
-  // Permanently delete the email from Gmail (not just trash)
+type GmailDeleteResult =
+  | { ok: true }
+  | {
+      ok: false;
+      status: number;
+      code?: number;
+      reason?: string;
+      message?: string;
+    };
+
+async function deleteEmailFromGmail(accessToken: string, emailId: string): Promise<GmailDeleteResult> {
+  // Permanently delete the email from Gmail (bypasses Trash)
   const response = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
     {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
 
-  if (!response.ok) {
-    const error = await response.json();
-    console.error('Gmail delete error:', error);
-    return false;
+  if (response.ok) {
+    console.log(`Successfully deleted email ${emailId} from Gmail permanently`);
+    return { ok: true };
   }
 
-  console.log(`Successfully deleted email ${emailId} from Gmail permanently`);
-  return true;
+  let payload: any = null;
+  try {
+    payload = await response.json();
+  } catch {
+    // ignore
+  }
+
+  const firstError = payload?.error?.errors?.[0];
+  const result: GmailDeleteResult = {
+    ok: false,
+    status: response.status,
+    code: payload?.error?.code,
+    reason: firstError?.reason,
+    message: payload?.error?.message,
+  };
+
+  console.error('Gmail delete error:', { emailId, ...result });
+  return result;
 }
 
 serve(async (req) => {
@@ -143,7 +168,8 @@ serve(async (req) => {
       console.log(`Auto-unsubscribe processed for email ${emailId}`);
       
       // Delete the email from Gmail
-      const deleted = await deleteEmailFromGmail(accessToken, emailId);
+      const deleteResult = await deleteEmailFromGmail(accessToken, emailId);
+      const deleted = deleteResult.ok;
       
       // Log to cleanup history
       await supabase.from('cleanup_history').insert({
@@ -159,6 +185,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true, 
         deleted: deleted,
+        deleteError: deleted ? null : deleteResult,
         message: deleted ? 'Successfully unsubscribed and deleted email' : 'Unsubscribed but failed to delete email'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -169,7 +196,8 @@ serve(async (req) => {
       // Just delete the email without unsubscribing
       console.log(`Delete-only processed for email ${emailId}`);
       
-      const deleted = await deleteEmailFromGmail(accessToken, emailId);
+      const deleteResult = await deleteEmailFromGmail(accessToken, emailId);
+      const deleted = deleteResult.ok;
       
       // Log to cleanup history
       await supabase.from('cleanup_history').insert({
@@ -185,6 +213,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: deleted, 
         deleted: deleted,
+        deleteError: deleted ? null : deleteResult,
         message: deleted ? 'Successfully deleted email' : 'Failed to delete email'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

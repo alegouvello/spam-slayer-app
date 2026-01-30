@@ -293,6 +293,8 @@ export const Dashboard = () => {
     let webOpened = 0;
     let autoUnsubs = 0;
     const deletedEmailIds: string[] = [];
+    let deleteFailures = 0;
+    let permissionFailures = 0;
 
     for (const email of spamEmails) {
       try {
@@ -311,6 +313,12 @@ export const Dashboard = () => {
 
           if (data?.deleted) {
             deletedEmailIds.push(email.id);
+          } else {
+            deleteFailures++;
+            const reason = data?.deleteError?.reason;
+            if (reason === 'insufficientPermissions' || reason === 'insufficientAuthenticationScopes') {
+              permissionFailures++;
+            }
           }
           autoUnsubs++;
           succeeded++;
@@ -330,6 +338,12 @@ export const Dashboard = () => {
           
           if (!error && data?.deleted) {
             deletedEmailIds.push(email.id);
+          } else {
+            deleteFailures++;
+            const reason = data?.deleteError?.reason;
+            if (reason === 'insufficientPermissions' || reason === 'insufficientAuthenticationScopes') {
+              permissionFailures++;
+            }
           }
           webOpened++;
           succeeded++;
@@ -346,6 +360,12 @@ export const Dashboard = () => {
           
           if (!error && data?.deleted) {
             deletedEmailIds.push(email.id);
+          } else {
+            deleteFailures++;
+            const reason = data?.deleteError?.reason;
+            if (reason === 'insufficientPermissions' || reason === 'insufficientAuthenticationScopes') {
+              permissionFailures++;
+            }
           }
           succeeded++;
         }
@@ -369,6 +389,13 @@ export const Dashboard = () => {
       webLinksOpened: prev.webLinksOpened + webOpened,
       autoUnsubscribes: prev.autoUnsubscribes + autoUnsubs,
     }));
+
+    if (deleteFailures > 0) {
+      const msg = permissionFailures > 0
+        ? 'Some emails could not be permanently deleted. Please reconnect Gmail and try again.'
+        : 'Some emails could not be permanently deleted. Please try again.';
+      toast.error(msg);
+    }
 
     toast.success(`Cleaned ${deletedEmailIds.length} spam emails${webOpened > 0 ? `, ${webOpened} unsubscribe links opened` : ''}`);
     setIsProcessing(false);
