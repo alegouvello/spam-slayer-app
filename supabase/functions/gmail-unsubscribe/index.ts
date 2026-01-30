@@ -73,11 +73,11 @@ async function getValidAccessToken(supabase: any, userId: string): Promise<strin
 }
 
 async function deleteEmailFromGmail(accessToken: string, emailId: string): Promise<boolean> {
-  // Use Gmail API to trash the email (safer than permanent delete)
+  // Permanently delete the email from Gmail (not just trash)
   const response = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/trash`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
     {
-      method: 'POST',
+      method: 'DELETE',
       headers: { 'Authorization': `Bearer ${accessToken}` },
     }
   );
@@ -88,7 +88,7 @@ async function deleteEmailFromGmail(accessToken: string, emailId: string): Promi
     return false;
   }
 
-  console.log(`Successfully trashed email ${emailId} from Gmail`);
+  console.log(`Successfully deleted email ${emailId} from Gmail permanently`);
   return true;
 }
 
