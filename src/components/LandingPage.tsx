@@ -50,7 +50,30 @@ export const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Full-page Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed inset-0 w-full h-full object-cover opacity-40 -z-10"
+      >
+        <source src={heroVideo} type="video/mp4" />
+      </video>
+      <div className="fixed inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background/90 -z-10" />
+      
+      {/* Shimmer overlay effect */}
+      <motion.div
+        className="fixed inset-0 pointer-events-none -z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.03, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          background: 'linear-gradient(135deg, transparent 0%, hsl(var(--primary) / 0.1) 50%, transparent 100%)',
+        }}
+      />
+
       {/* Theme Toggle - Fixed Position */}
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
@@ -58,28 +81,6 @@ export const LandingPage = () => {
 
       {/* Hero Section */}
       <div className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center overflow-hidden">
-        {/* Background Video */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-50"
-        >
-          <source src={heroVideo} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
-        
-        {/* Shimmer overlay effect */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.03, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            background: 'linear-gradient(135deg, transparent 0%, hsl(var(--primary) / 0.1) 50%, transparent 100%)',
-          }}
-        />
         
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <motion.div 
@@ -166,7 +167,7 @@ export const LandingPage = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-16 sm:py-24 bg-background">
+      <div className="py-16 sm:py-24 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-xl mb-10 sm:mb-16">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-3 sm:mb-4">
@@ -199,7 +200,7 @@ export const LandingPage = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="py-14 sm:py-20 border-t">
+      <div className="py-14 sm:py-20 border-t bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-3 sm:mb-4">
             Ready to clean up?
@@ -221,7 +222,7 @@ export const LandingPage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-6 sm:py-8 border-t">
+      <footer className="py-6 sm:py-8 border-t bg-background/90 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4 text-muted-foreground" />
