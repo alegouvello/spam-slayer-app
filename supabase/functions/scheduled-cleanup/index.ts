@@ -120,17 +120,17 @@ async function fetchMessagesFromLabel(
   return allMessages;
 }
 
-async function deleteEmailFromGmail(accessToken: string, emailId: string): Promise<boolean> {
+async function trashEmailInGmail(accessToken: string, emailId: string): Promise<boolean> {
   const response = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/trash`,
     {
-      method: 'DELETE',
+      method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
 
   if (!response.ok) {
-    console.error('Gmail delete error for', emailId);
+    console.error('Gmail trash error for', emailId);
     return false;
   }
   return true;
@@ -197,19 +197,19 @@ async function processUserCleanup(
   let deleted = 0;
 
   if (schedule.auto_approve) {
-    // Delete only flagged spam emails
+    // Trash flagged spam emails
     for (const emailId of emailIdsToDelete) {
-      const success = await deleteEmailFromGmail(accessToken, emailId);
+      const success = await trashEmailInGmail(accessToken, emailId);
       if (success) {
         deleted++;
-        // Update cleanup history to mark as deleted
+        // Update cleanup history to mark as deleted (trashed)
         await supabase.from('cleanup_history')
           .update({ deleted: true })
           .eq('user_id', schedule.user_id)
           .eq('email_id', emailId);
       }
     }
-    console.log(`Deleted ${deleted} flagged spam emails for user ${schedule.user_id}`);
+    console.log(`Trashed ${deleted} flagged spam emails for user ${schedule.user_id}`);
   } else {
     console.log(`User ${schedule.user_id} has auto_approve disabled, skipping deletion`);
   }
