@@ -50,7 +50,7 @@ export const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="relative min-h-[90vh] flex items-center">
+      <div className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-60"
@@ -58,34 +58,34 @@ export const LandingPage = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
         
-        <div className="container mx-auto px-6 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium text-primary mb-4 tracking-wide uppercase">
+            <p className="text-xs sm:text-sm font-medium text-primary mb-3 sm:mb-4 tracking-wide uppercase">
               Email Simplified
             </p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-6 leading-[1.1]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-4 sm:mb-6 leading-[1.1]">
               A cleaner inbox
               <br />
               <span className="text-muted-foreground">starts here</span>
             </h1>
-            <p className="text-lg text-muted-foreground mb-10 max-w-lg leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground mb-8 sm:mb-10 max-w-lg leading-relaxed">
               Effortlessly remove spam and unwanted subscriptions. 
               Our AI handles the unsubscribing so you don't have to.
             </p>
             
             {error && (
-              <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg text-sm">
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-destructive/10 text-destructive rounded-lg text-sm">
                 {error}
               </div>
             )}
             
             <Button 
               size="lg" 
-              className="gap-3 text-base px-8 h-12 rounded-full elegant-shadow"
+              className="gap-2 sm:gap-3 text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 rounded-full elegant-shadow w-full sm:w-auto"
               onClick={handleSignIn}
               disabled={isLoading}
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -105,7 +105,7 @@ export const LandingPage = () => {
               </svg>
               {isLoading ? 'Connecting...' : 'Continue with Google'}
             </Button>
-            <p className="text-xs text-muted-foreground mt-4">
+            <p className="text-xs text-muted-foreground mt-3 sm:mt-4 text-center sm:text-left">
               Read-only access to your spam folder
             </p>
           </div>
@@ -113,29 +113,29 @@ export const LandingPage = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-24 bg-background">
-        <div className="container mx-auto px-6">
-          <div className="max-w-xl mb-16">
-            <h2 className="text-2xl md:text-3xl font-medium mb-4">
+      <div className="py-16 sm:py-24 bg-background">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-xl mb-10 sm:mb-16">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-3 sm:mb-4">
               How it works
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Three steps to email peace of mind
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-12 md:gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12 md:gap-8">
             {features.map((feature, index) => (
               <div key={feature.title} className="group">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
-                    <feature.icon className="h-5 w-5 text-accent-foreground" />
+                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-accent flex items-center justify-center">
+                    <feature.icon className="h-4 w-4 sm:h-5 sm:w-5 text-accent-foreground" />
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Step {index + 1}
                   </span>
                 </div>
-                <h3 className="text-lg font-medium mb-2">{feature.title}</h3>
+                <h3 className="text-base sm:text-lg font-medium mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {feature.description}
                 </p>
@@ -146,18 +146,18 @@ export const LandingPage = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="py-20 border-t">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-2xl md:text-3xl font-medium mb-4">
+      <div className="py-14 sm:py-20 border-t">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-medium mb-3 sm:mb-4">
             Ready to clean up?
           </h2>
-          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 max-w-md mx-auto">
             Join thousands who've already reclaimed their inbox
           </p>
           <Button 
             size="lg" 
             variant="outline"
-            className="gap-2 rounded-full h-12 px-8"
+            className="gap-2 rounded-full h-11 sm:h-12 px-6 sm:px-8 w-full sm:w-auto"
             onClick={handleSignIn}
             disabled={isLoading}
           >
@@ -168,8 +168,8 @@ export const LandingPage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-8 border-t">
-        <div className="container mx-auto px-6 flex items-center justify-between">
+      <footer className="py-6 sm:py-8 border-t">
+        <div className="container mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Spam Cleanup</span>
