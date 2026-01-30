@@ -40,7 +40,7 @@ serve(async (req) => {
     }
 
     const { emails } = await req.json();
-    console.log(`Analyzing ${emails.length} emails for user: ${user.id}`);
+    console.log(`Analyzing ${emails.length} emails`);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {

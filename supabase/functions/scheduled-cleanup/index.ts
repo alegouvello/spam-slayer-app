@@ -156,11 +156,11 @@ async function processUserCleanup(
   supabase: any,
   schedule: ScheduledCleanup
 ): Promise<{ processed: number; deleted: number }> {
-  console.log(`Processing scheduled cleanup for user ${schedule.user_id}`);
+  console.log('Processing scheduled cleanup');
 
   const accessToken = await getValidAccessToken(supabase, schedule.user_id);
   if (!accessToken) {
-    console.log(`User ${schedule.user_id} has no valid Gmail token, skipping`);
+    console.log('User has no valid Gmail token, skipping');
     return { processed: 0, deleted: 0 };
   }
 
@@ -178,7 +178,7 @@ async function processUserCleanup(
   }
 
   const emailIdsToDelete = (flaggedEmails || []).map((e: any) => e.email_id);
-  console.log(`Found ${emailIdsToDelete.length} flagged spam emails to delete for user ${schedule.user_id}`);
+  console.log(`Found ${emailIdsToDelete.length} flagged spam emails to delete`);
 
   if (emailIdsToDelete.length === 0) {
     // Also fetch current spam folder for new spam
@@ -209,9 +209,9 @@ async function processUserCleanup(
           .eq('email_id', emailId);
       }
     }
-    console.log(`Permanently deleted ${deleted} flagged spam emails for user ${schedule.user_id}`);
+    console.log(`Permanently deleted ${deleted} flagged spam emails`);
   } else {
-    console.log(`User ${schedule.user_id} has auto_approve disabled, skipping deletion`);
+    console.log('User has auto_approve disabled, skipping deletion');
   }
 
   // Update schedule timestamps
@@ -258,7 +258,7 @@ serve(async (req) => {
           success: true,
         });
       } catch (err) {
-        console.error(`Error processing user ${schedule.user_id}:`, err);
+        console.error('Error processing scheduled cleanup:', err);
         results.push({
           user_id: schedule.user_id,
           success: false,
