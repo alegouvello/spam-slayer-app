@@ -16,7 +16,8 @@ import {
   Sparkles,
   Inbox,
   FolderOpen,
-  Users
+  Users,
+  ShieldCheck
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
@@ -431,6 +432,29 @@ export const Dashboard = () => {
     setEmails(prev => prev.filter(e => e.id !== email.id));
   };
 
+  const handleBulkMarkNotSpam = async () => {
+    const selectedEmails = emails.filter(e => e.selected);
+    if (selectedEmails.length === 0) {
+      toast.error('Please select emails to mark as not spam');
+      return;
+    }
+
+    setIsProcessing(true);
+    let processed = 0;
+
+    for (const email of selectedEmails) {
+      await saveSenderFeedback(email, false);
+      processed++;
+    }
+
+    // Remove all selected emails from the list
+    const selectedIds = new Set(selectedEmails.map(e => e.id));
+    setEmails(prev => prev.filter(e => !selectedIds.has(e.id)));
+
+    toast.success(`Marked ${processed} email${processed > 1 ? 's' : ''} as not spam`);
+    setIsProcessing(false);
+  };
+
   const handleUnsubscribeFromPreview = async (email: Email) => {
     if (email.hasListUnsubscribe) {
       try {
@@ -624,20 +648,36 @@ export const Dashboard = () => {
                       )}
 
                       {selectedCount > 0 && (
-                        <Button 
-                          variant="outline"
-                          onClick={handleProcess} 
-                          disabled={isProcessing}
-                          size="lg"
-                          className="gap-2 rounded-xl border-2"
-                        >
-                          {isProcessing ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4" />
-                          )}
-                          Process Selected ({selectedCount})
-                        </Button>
+                        <>
+                          <Button 
+                            variant="outline"
+                            onClick={handleProcess} 
+                            disabled={isProcessing}
+                            size="lg"
+                            className="gap-2 rounded-xl border-2"
+                          >
+                            {isProcessing ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4" />
+                            )}
+                            Process Selected ({selectedCount})
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={handleBulkMarkNotSpam} 
+                            disabled={isProcessing}
+                            size="lg"
+                            className="gap-2 rounded-xl border-2 border-success/30 text-success hover:bg-success/10 hover:text-success"
+                          >
+                            {isProcessing ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="h-4 w-4" />
+                            )}
+                            Not Spam ({selectedCount})
+                          </Button>
+                        </>
                       )}
                     </>
                   )}
