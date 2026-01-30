@@ -70,10 +70,9 @@ serve(async (req) => {
       });
     }
 
-    // Full mail.google.com scope is required for permanent email deletion
-    // gmail.modify only allows trashing, not permanent deletion
     const scopes = [
-      'https://mail.google.com/',
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/gmail.modify',
     ];
 
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
