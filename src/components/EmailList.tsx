@@ -29,9 +29,10 @@ interface EmailListProps {
   onPreview: (email: Email) => void;
   onRemove: (emailId: string) => void;
   onMarkNotSpam?: (email: Email) => void;
+  safeSenders?: Set<string>;
 }
 
-export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, onMarkNotSpam }: EmailListProps) => {
+export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, onMarkNotSpam, safeSenders }: EmailListProps) => {
   const allSelected = emails.length > 0 && emails.every(e => e.selected);
 
   const getConfidenceBadge = (confidence?: string) => {
@@ -98,6 +99,18 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
                   >
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="font-medium text-sm truncate">{email.sender}</span>
+                      {safeSenders?.has(email.senderEmail.toLowerCase()) && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge className="gap-1 text-xs font-normal bg-success/15 text-success border-success/30">
+                              <ShieldCheck className="h-3 w-3" /> Safe
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            You marked this sender as safe
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       {email.hasListUnsubscribe && (
                         <Tooltip>
                           <TooltipTrigger>

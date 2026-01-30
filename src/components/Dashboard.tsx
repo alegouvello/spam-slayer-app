@@ -497,6 +497,12 @@ export const Dashboard = () => {
 
   const selectedCount = filteredEmails.filter(e => e.selected).length;
 
+  // Create a set of safe senders for quick lookup
+  const safeSenders = new Set(
+    Object.entries(senderFeedback)
+      .filter(([_, isSpam]) => isSpam === false)
+      .map(([email]) => email)
+  );
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Beautiful Background */}
@@ -728,6 +734,7 @@ export const Dashboard = () => {
                     onPreview={handlePreviewEmail}
                     onRemove={handleRemoveEmail}
                     onMarkNotSpam={handleMarkNotSpam}
+                    safeSenders={safeSenders}
                   />
                 </div>
               </div>
