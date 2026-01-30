@@ -17,7 +17,8 @@ import {
   Inbox,
   FolderOpen,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  History
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
@@ -26,6 +27,7 @@ import { ScheduleSettings } from './ScheduleSettings';
 import { StatsCards } from './StatsCards';
 import { GmailConnect } from './GmailConnect';
 import { SpamSendersList } from './SpamSendersList';
+import { CleanupHistory } from './CleanupHistory';
 import { Email, CleanupStats } from '@/types/email';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -683,10 +685,14 @@ export const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="cleanup" className="space-y-6 sm:space-y-8">
-          <TabsList className="bg-white/50 backdrop-blur-sm p-1 sm:p-1.5 rounded-xl sm:rounded-2xl w-full sm:w-fit shadow-lg shadow-black/5 border border-white/50 grid grid-cols-3 sm:flex">
+          <TabsList className="bg-white/50 backdrop-blur-sm p-1 sm:p-1.5 rounded-xl sm:rounded-2xl w-full sm:w-fit shadow-lg shadow-black/5 border border-white/50 grid grid-cols-4 sm:flex">
             <TabsTrigger value="cleanup" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
               <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden xs:inline">Cleanup</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
+              <History className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">History</span>
             </TabsTrigger>
             <TabsTrigger value="senders" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
               <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -910,6 +916,10 @@ export const Dashboard = () => {
               emailCount={pendingCleanupCount}
               type={confirmDialogType}
             />
+          </TabsContent>
+
+          <TabsContent value="history" className="animate-fade-in">
+            <CleanupHistory />
           </TabsContent>
 
           <TabsContent value="senders" className="animate-fade-in">
