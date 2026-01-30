@@ -9,6 +9,7 @@ import { AnimatedLayout } from "@/components/AnimatedLayout";
 import { CookieConsent } from "@/components/CookieConsent";
 import Index from "./pages/Index";
 import GmailCallback from "./pages/GmailCallback";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/gmail/callback" element={<GmailCallback />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
