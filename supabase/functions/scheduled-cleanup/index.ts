@@ -49,20 +49,34 @@ async function fetchMessagesFromLabel(
   return allMessages;
 }
 
-async function deleteEmailPermanently(accessToken: string, emailId: string): Promise<boolean> {
-  const response = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
-    {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
+async function deleteEmailPermanently(accessToken: string, emailId: string): Promise<{ success: boolean; notFound: boolean }> {
+  try {
+    const response = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
 
-  if (!response.ok && response.status !== 204) {
-    console.error('Gmail permanent delete error for email');
-    return false;
+    // 204 = success, 404 = email no longer exists (already deleted by Gmail)
+    if (response.status === 204 || response.status === 200) {
+      console.log(`Successfully deleted email ${emailId}`);
+      return { success: true, notFound: false };
+    }
+    
+    if (response.status === 404) {
+      console.log(`Email ${emailId} not found (already deleted by Gmail)`);
+      return { success: false, notFound: true };
+    }
+
+    const errorData = await response.json().catch(() => ({}));
+    console.error(`Gmail delete error for ${emailId}: status=${response.status}`, errorData);
+    return { success: false, notFound: false };
+  } catch (error) {
+    console.error(`Exception deleting email ${emailId}:`, error);
+    return { success: false, notFound: false };
   }
-  return true;
 }
 
 function calculateNextRun(frequency: string): string {
@@ -128,17 +142,31 @@ async function processUserCleanup(
   }
 
   let deleted = 0;
+  let alreadyGone = 0;
+  let failed = 0;
 
   if (schedule.auto_approve) {
+    console.log(`Starting deletion of ${emailIdsToDelete.length} emails with auto_approve enabled`);
+    
     // Try to delete from each connected account
     for (const emailId of emailIdsToDelete) {
-      let wasDeleted = false;
+      let handled = false;
       
       for (const { accessToken } of tokenResults) {
-        const success = await deleteEmailPermanently(accessToken, emailId);
-        if (success) {
-          wasDeleted = true;
+        const result = await deleteEmailPermanently(accessToken, emailId);
+        
+        if (result.success) {
           deleted++;
+          handled = true;
+          await supabase.from('cleanup_history')
+            .update({ deleted: true })
+            .eq('user_id', schedule.user_id)
+            .eq('email_id', emailId);
+          break;
+        } else if (result.notFound) {
+          // Email was already deleted by Gmail - mark as deleted in our records too
+          alreadyGone++;
+          handled = true;
           await supabase.from('cleanup_history')
             .update({ deleted: true })
             .eq('user_id', schedule.user_id)
@@ -146,8 +174,12 @@ async function processUserCleanup(
           break;
         }
       }
+      
+      if (!handled) {
+        failed++;
+      }
     }
-    console.log(`Permanently deleted ${deleted} flagged spam emails`);
+    console.log(`Cleanup complete: ${deleted} deleted, ${alreadyGone} already gone, ${failed} failed`);
   } else {
     console.log('User has auto_approve disabled, skipping deletion');
   }
