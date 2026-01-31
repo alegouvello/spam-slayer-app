@@ -39,7 +39,10 @@ export const SeamlessVideo = () => {
         autoPlay
         muted
         playsInline
-        className={`fixed inset-0 w-full h-full object-cover z-0 transition-opacity duration-1500 ${
+        controls={false}
+        disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplayback"
+        className={`fixed inset-0 w-full h-full object-cover z-0 transition-opacity duration-1500 pointer-events-none ${
           activeVideo === 1 ? 'opacity-40' : 'opacity-0'
         }`}
       >
@@ -49,7 +52,10 @@ export const SeamlessVideo = () => {
         ref={video2Ref}
         muted
         playsInline
-        className={`fixed inset-0 w-full h-full object-cover z-0 transition-opacity duration-1500 ${
+        controls={false}
+        disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplayback"
+        className={`fixed inset-0 w-full h-full object-cover z-0 transition-opacity duration-1500 pointer-events-none ${
           activeVideo === 2 ? 'opacity-40' : 'opacity-0'
         }`}
       >
