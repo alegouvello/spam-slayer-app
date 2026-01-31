@@ -118,6 +118,23 @@
     @apply border-border;
   }
 
+  /* Prevent Safari/iOS from painting native media controls overlays on background videos */
+  video.seamless-video::-webkit-media-controls,
+  video.seamless-video::-webkit-media-controls-panel,
+  video.seamless-video::-webkit-media-controls-play-button,
+  video.seamless-video::-webkit-media-controls-start-playback-button,
+  video.seamless-video::-webkit-media-controls-timeline,
+  video.seamless-video::-webkit-media-controls-current-time-display,
+  video.seamless-video::-webkit-media-controls-time-remaining-display,
+  video.seamless-video::-webkit-media-controls-mute-button,
+  video.seamless-video::-webkit-media-controls-volume-slider,
+  video.seamless-video::-webkit-media-controls-fullscreen-button,
+  video.seamless-video::-webkit-media-controls-overlay-play-button {
+    display: none !important;
+    opacity: 0 !important;
+    -webkit-appearance: none;
+  }
+
   html {
     font-feature-settings: "kern" 1, "liga" 1;
     -webkit-font-smoothing: antialiased;
