@@ -54,7 +54,10 @@ export const LandingPage = () => {
     <div className="min-h-screen bg-background relative isolate">
       {/* Seamless Background Video */}
       <SeamlessVideo />
-      <div className="fixed inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background/90 z-0" />
+      {/* Blocking overlay - prevents native media controls from being triggered */}
+      <div className="fixed inset-0 z-[1]" aria-hidden="true" />
+      {/* Gradient overlay for text readability */}
+      <div className="fixed inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background/95 z-[2]" />
       
       {/* Shimmer overlay effect */}
       <motion.div
