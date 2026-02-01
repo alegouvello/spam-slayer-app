@@ -235,13 +235,13 @@ function calculateNextRun(frequency: string): string {
 async function processUserCleanup(
   supabase: any,
   schedule: ScheduledCleanup,
-): Promise<{ scanned: number; analyzed: number; deleted: number }> {
+): Promise<{ scanned: number; analyzed: number; deleted: number; unsubscribed: number }> {
   console.log('Processing scheduled cleanup for user', schedule.user_id);
 
   const tokenResults = await getValidAccessTokensForAllAccounts(supabase, schedule.user_id);
   if (tokenResults.length === 0) {
     console.log('No valid Gmail tokens for user, skipping');
-    return { scanned: 0, analyzed: 0, deleted: 0 };
+    return { scanned: 0, analyzed: 0, deleted: 0, unsubscribed: 0 };
   }
 
   // 1) Fetch emails from Spam folder across all connected accounts
@@ -259,7 +259,17 @@ async function processUserCleanup(
       last_run_at: new Date().toISOString(),
       next_run_at: calculateNextRun(schedule.frequency),
     }).eq('id', schedule.id);
-    return { scanned: 0, analyzed: 0, deleted: 0 };
+    
+    // Create a cleanup run record even for empty runs
+    await supabase.from('cleanup_runs').insert({
+      user_id: schedule.user_id,
+      emails_scanned: 0,
+      emails_deleted: 0,
+      emails_unsubscribed: 0,
+      top_senders: [],
+    });
+    
+    return { scanned: 0, analyzed: 0, deleted: 0, unsubscribed: 0 };
   }
 
   console.log(`Total spam emails to analyze: ${allEmails.length}`);
@@ -281,6 +291,10 @@ async function processUserCleanup(
   let deleted = 0;
   let alreadyGone = 0;
   let failed = 0;
+  let unsubscribed = 0;
+  
+  // Track sender counts for summary
+  const senderCounts = new Map<string, { email: string; name: string; count: number }>();
 
   if (schedule.auto_approve) {
     const definitelySpam = allEmails.filter(
@@ -289,6 +303,15 @@ async function processUserCleanup(
     console.log(`Emails marked definitely_spam: ${definitelySpam.length}`);
 
     for (const email of definitelySpam) {
+      // Track sender counts
+      const senderKey = email.senderEmail.toLowerCase();
+      const existing = senderCounts.get(senderKey);
+      if (existing) {
+        existing.count++;
+      } else {
+        senderCounts.set(senderKey, { email: email.senderEmail, name: email.sender, count: 1 });
+      }
+
       // Find the token for this account
       const tokenEntry = tokenResults.find((t) => t.account.id === email.accountId);
       if (!tokenEntry) continue;
@@ -304,12 +327,15 @@ async function processUserCleanup(
         subject: email.subject,
         spam_confidence: analysis?.spamConfidence || null,
         ai_reasoning: analysis?.reasoning || null,
-        unsubscribe_method: 'scheduled_auto',
+        unsubscribe_method: email.hasListUnsubscribe ? 'auto_header' : 'scheduled_auto',
         unsubscribe_status: result.success || result.notFound ? 'success' : 'failed',
         deleted: result.success || result.notFound,
       });
 
-      if (result.success) deleted++;
+      if (result.success) {
+        deleted++;
+        if (email.hasListUnsubscribe) unsubscribed++;
+      }
       else if (result.notFound) alreadyGone++;
       else failed++;
     }
@@ -319,13 +345,30 @@ async function processUserCleanup(
     console.log('auto_approve disabled, skipping deletion');
   }
 
+  // Get top 5 senders
+  const topSenders = Array.from(senderCounts.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map(s => ({ email: s.email, name: s.name, count: s.count }));
+
+  // Create cleanup run summary record
+  await supabase.from('cleanup_runs').insert({
+    user_id: schedule.user_id,
+    emails_scanned: allEmails.length,
+    emails_deleted: deleted,
+    emails_unsubscribed: unsubscribed,
+    top_senders: topSenders,
+  });
+
+  console.log('Created cleanup run summary');
+
   // Update schedule timestamps
   await supabase.from('scheduled_cleanup').update({
     last_run_at: new Date().toISOString(),
     next_run_at: calculateNextRun(schedule.frequency),
   }).eq('id', schedule.id);
 
-  return { scanned: allEmails.length, analyzed: analysisMap.size, deleted };
+  return { scanned: allEmails.length, analyzed: analysisMap.size, deleted, unsubscribed };
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ import { StatsCards } from './StatsCards';
 import { GmailConnect } from './GmailConnect';
 import { SpamSendersList } from './SpamSendersList';
 import { CleanupHistory } from './CleanupHistory';
+import { CleanupSummaryCard } from './CleanupSummaryCard';
 import { SeamlessVideo } from './SeamlessVideo';
 import { Email, CleanupStats } from '@/types/email';
 import { toast } from 'sonner';
@@ -703,7 +704,8 @@ export const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="cleanup" className="space-y-8 animate-fade-in">
-            {/* Stats */}
+            {/* Cleanup Summary Notification */}
+            <CleanupSummaryCard />
 
             {/* Stats */}
             <StatsCards stats={stats} />

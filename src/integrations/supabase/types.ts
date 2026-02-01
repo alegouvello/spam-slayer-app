@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cleanup_runs: {
+        Row: {
+          created_at: string
+          emails_deleted: number
+          emails_scanned: number
+          emails_unsubscribed: number
+          id: string
+          is_dismissed: boolean
+          run_at: string
+          top_senders: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emails_deleted?: number
+          emails_scanned?: number
+          emails_unsubscribed?: number
+          id?: string
+          is_dismissed?: boolean
+          run_at?: string
+          top_senders?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emails_deleted?: number
+          emails_scanned?: number
+          emails_unsubscribed?: number
+          id?: string
+          is_dismissed?: boolean
+          run_at?: string
+          top_senders?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       gmail_accounts: {
         Row: {
           created_at: string
