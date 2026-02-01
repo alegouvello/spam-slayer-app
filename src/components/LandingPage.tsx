@@ -57,7 +57,9 @@ export const LandingPage = () => {
       {/* Blocking overlay - prevents native media controls from being triggered */}
       <div className="fixed inset-0 z-[1]" aria-hidden="true" />
       {/* Gradient overlay for text readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background/95 z-[2]" />
+      <div className="fixed inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background z-[2]" />
+      {/* Bottom bar to cover iOS native video controls */}
+      <div className="fixed bottom-0 left-0 right-0 h-24 bg-background z-[3]" />
       
       {/* Shimmer overlay effect */}
       <motion.div
