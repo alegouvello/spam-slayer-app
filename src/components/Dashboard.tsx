@@ -686,19 +686,19 @@ export const Dashboard = () => {
         <Tabs defaultValue="cleanup" className="space-y-6 sm:space-y-8">
           <TabsList className="bg-white/50 backdrop-blur-sm p-1 sm:p-1.5 rounded-xl sm:rounded-2xl w-full sm:w-fit shadow-lg shadow-black/5 border border-white/50 grid grid-cols-4 sm:flex">
             <TabsTrigger value="cleanup" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
-              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground" />
               <span className="hidden xs:inline">Cleanup</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
-              <History className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <History className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground" />
               <span className="hidden xs:inline">History</span>
             </TabsTrigger>
             <TabsTrigger value="senders" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
-              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground" />
               <span className="hidden xs:inline">Learned</span>
             </TabsTrigger>
             <TabsTrigger value="schedule" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground" />
               <span className="hidden xs:inline">Schedule</span>
             </TabsTrigger>
           </TabsList>
