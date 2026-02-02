@@ -267,12 +267,11 @@ export const Dashboard = () => {
   };
 
   const requestCleanAllSpam = () => {
-    const spamEmails = emails.filter(e => 
-      e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
-    );
+    // Only include emails flagged as "definitely_spam" (red badges)
+    const spamEmails = emails.filter(e => e.spamConfidence === 'definitely_spam');
     
     if (spamEmails.length === 0) {
-      toast.error('No spam emails found. Run AI Analyze first.');
+      toast.error('No definite spam emails found. Run AI Analyze first.');
       return;
     }
 
@@ -282,9 +281,8 @@ export const Dashboard = () => {
   };
 
   const handleCleanAllSpam = async () => {
-    const spamEmails = emails.filter(e => 
-      e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
-    );
+    // Only process emails flagged as "definitely_spam" (red badges)
+    const spamEmails = emails.filter(e => e.spamConfidence === 'definitely_spam');
     
     if (spamEmails.length === 0) {
       return;
@@ -413,9 +411,8 @@ export const Dashboard = () => {
     setIsProcessing(false);
   };
 
-  const spamCount = filteredEmails.filter(e => 
-    e.spamConfidence === 'definitely_spam' || e.spamConfidence === 'likely_spam'
-  ).length;
+  // Count only definitely_spam for the "Clean All Spam" button
+  const spamCount = filteredEmails.filter(e => e.spamConfidence === 'definitely_spam').length;
 
   const handleSelectEmail = (emailId: string) => {
     const email = emails.find(e => e.id === emailId);
