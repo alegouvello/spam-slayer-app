@@ -71,9 +71,35 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !user) {
+    // Try to get user from token - handle both HS256 and ES256 JWTs
+    let user = null;
+    
+    const { data: userData, error: authError } = await supabase.auth.getUser(token);
+    
+    if (!authError && userData?.user) {
+      user = userData.user;
+    } else {
+      // For ES256 tokens (Lovable Cloud OAuth), decode and verify via admin API
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          const userId = payload.sub;
+          
+          if (userId) {
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            if (authUser?.user) {
+              user = authUser.user;
+            }
+          }
+        }
+      } catch (decodeError) {
+        console.error('Token decode error:', decodeError);
+      }
+    }
+    
+    if (!user) {
       console.error('Auth error:', authError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
