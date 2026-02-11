@@ -33,7 +33,7 @@ interface EmailSummary {
 
 async function fetchAllMessagesFromLabel(
   accessToken: string,
-  labelId: 'SPAM' | 'TRASH',
+  labelId: string,
 ): Promise<Array<{ id: string }>> {
   const allMessages: Array<{ id: string }> = [];
   let pageToken: string | null = null;
@@ -112,27 +112,27 @@ async function fetchMessageDetails(
   return results;
 }
 
-async function deleteEmailPermanently(
+async function trashEmail(
   accessToken: string,
   emailId: string,
 ): Promise<{ success: boolean; notFound: boolean }> {
   try {
     const response = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
-      { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } },
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/trash`,
+      { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } },
     );
-    if (response.status === 204 || response.status === 200) {
-      console.log(`Deleted ${emailId}`);
+    if (response.ok) {
+      console.log(`Trashed ${emailId}`);
       return { success: true, notFound: false };
     }
     if (response.status === 404) {
-      console.log(`Email ${emailId} not found (already deleted)`);
+      console.log(`Email ${emailId} not found (already gone)`);
       return { success: false, notFound: true };
     }
-    console.error(`Gmail delete error ${emailId}: status=${response.status}`);
+    console.error(`Gmail trash error ${emailId}: status=${response.status}`);
     return { success: false, notFound: false };
   } catch (err) {
-    console.error(`Exception deleting ${emailId}:`, err);
+    console.error(`Exception trashing ${emailId}:`, err);
     return { success: false, notFound: false };
   }
 }
@@ -248,13 +248,17 @@ async function processUserCleanup(
   const allEmails: EmailSummary[] = [];
   for (const { accessToken, account } of tokenResults) {
     const spamMsgs = await fetchAllMessagesFromLabel(accessToken, 'SPAM');
-    console.log(`Account ${account.gmail_email}: ${spamMsgs.length} spam messages`);
-    const details = await fetchMessageDetails(accessToken, spamMsgs, account.id);
+    const inboxMsgs = await fetchAllMessagesFromLabel(accessToken, 'INBOX');
+    console.log(`Account ${account.gmail_email}: ${spamMsgs.length} spam, ${inboxMsgs.length} inbox messages`);
+    const allMsgs = [...spamMsgs, ...inboxMsgs];
+    // Deduplicate
+    const uniqueMsgs = allMsgs.filter((m, i, self) => i === self.findIndex(s => s.id === m.id));
+    const details = await fetchMessageDetails(accessToken, uniqueMsgs, account.id);
     allEmails.push(...details);
   }
 
   if (allEmails.length === 0) {
-    console.log('No spam emails found');
+    console.log('No emails found to analyze');
     await supabase.from('scheduled_cleanup').update({
       last_run_at: new Date().toISOString(),
       next_run_at: calculateNextRun(schedule.frequency),
@@ -316,7 +320,7 @@ async function processUserCleanup(
       const tokenEntry = tokenResults.find((t) => t.account.id === email.accountId);
       if (!tokenEntry) continue;
 
-      const result = await deleteEmailPermanently(tokenEntry.accessToken, email.id);
+      const result = await trashEmail(tokenEntry.accessToken, email.id);
 
       // Record in cleanup_history
       const analysis = analysisMap.get(email.id);
