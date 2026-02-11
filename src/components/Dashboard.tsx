@@ -37,7 +37,7 @@ import { supabase } from '@/integrations/supabase/client';
 export const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
-  const [folderFilter, setFolderFilter] = useState<'all' | 'spam' | 'trash'>('all');
+  const [folderFilter, setFolderFilter] = useState<'all' | 'spam' | 'trash' | 'inbox'>('all');
   const [showSafeSenders, setShowSafeSenders] = useState(false);
   const [hiddenSafeCount, setHiddenSafeCount] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
@@ -166,6 +166,7 @@ export const Dashboard = () => {
 
   const spamFolderCount = emails.filter(e => e.folder === 'spam').length;
   const trashFolderCount = emails.filter(e => e.folder === 'trash').length;
+  const inboxFolderCount = emails.filter(e => e.folder === 'inbox').length;
 
   const handleScanSpam = async () => {
     setIsScanning(true);
@@ -681,7 +682,7 @@ export const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="cleanup" className="space-y-6 sm:space-y-8">
-          <TabsList className="bg-white/50 backdrop-blur-sm p-1 sm:p-1.5 rounded-xl sm:rounded-2xl w-full sm:w-fit shadow-lg shadow-black/5 border border-white/50 grid grid-cols-4 sm:flex">
+          <TabsList className="bg-white/50 backdrop-blur-sm p-1 sm:p-1.5 rounded-xl sm:rounded-2xl w-full sm:w-fit shadow-lg shadow-black/5 border border-white/50 grid grid-cols-4 sm:flex overflow-x-auto">
             <TabsTrigger value="cleanup" className="gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2 sm:px-6 py-2 sm:py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-xs sm:text-sm">
                 <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground" />
               <span className="hidden xs:inline">Cleanup</span>
@@ -716,9 +717,9 @@ export const Dashboard = () => {
                     <Inbox className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg sm:text-xl font-semibold">Spam & Trash</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl font-semibold">Email Cleanup</CardTitle>
                     <CardDescription className="text-xs sm:text-sm">
-                      Scan, review, and clean up unwanted emails
+                      Scan your inbox, spam &amp; trash — review and clean up unwanted emails
                     </CardDescription>
                   </div>
                 </div>
@@ -846,6 +847,15 @@ export const Dashboard = () => {
                     >
                       <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       Trash ({trashFolderCount})
+                    </Button>
+                    <Button
+                      variant={folderFilter === 'inbox' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setFolderFilter('inbox')}
+                      className={`gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl transition-all flex-1 sm:flex-none text-xs sm:text-sm h-8 sm:h-9 ${folderFilter === 'inbox' ? 'shadow-md' : 'hover:bg-white/50'}`}
+                    >
+                      <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      Inbox ({inboxFolderCount})
                     </Button>
                   </div>
 

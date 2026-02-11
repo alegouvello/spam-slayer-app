@@ -243,25 +243,28 @@ serve(async (req) => {
       let allEmails: any[] = [];
       let totalSpam = 0;
       let totalTrash = 0;
+      let totalInbox = 0;
 
       for (const { accessToken, account } of accountsToScan) {
-        console.log(`Scanning account: ${account.gmail_email}`);
+      console.log(`Scanning account: ${account.gmail_email}`);
         
         const spamMessages = await fetchAllMessagesFromLabel(accessToken, 'SPAM', 'spam');
         const trashMessages = await fetchAllMessagesFromLabel(accessToken, 'TRASH', 'trash');
+        const inboxMessages = await fetchAllMessagesFromLabel(accessToken, 'INBOX', 'inbox');
 
-        const allMessages = [...spamMessages, ...trashMessages];
+        const allMessages = [...spamMessages, ...trashMessages, ...inboxMessages];
         const uniqueMessages = allMessages.filter((msg, index, self) => 
           index === self.findIndex(m => m.id === msg.id)
         );
         
-        console.log(`Found ${spamMessages.length} spam + ${trashMessages.length} trash = ${uniqueMessages.length} unique messages for ${account.gmail_email}`);
+        console.log(`Found ${spamMessages.length} spam + ${trashMessages.length} trash + ${inboxMessages.length} inbox = ${uniqueMessages.length} unique messages for ${account.gmail_email}`);
 
         const emails = await fetchMessageDetails(accessToken, uniqueMessages, account.gmail_email, account.id);
         allEmails.push(...emails);
         
         totalSpam += spamMessages.length;
         totalTrash += trashMessages.length;
+        totalInbox += inboxMessages.length;
       }
 
       console.log(`Returning ${allEmails.length} emails total from ${accountsToScan.length} accounts`);
@@ -271,6 +274,7 @@ serve(async (req) => {
         stats: {
           spamCount: totalSpam,
           trashCount: totalTrash,
+          inboxCount: totalInbox,
           totalUnique: allEmails.length,
           accountsScanned: accountsToScan.length
         }

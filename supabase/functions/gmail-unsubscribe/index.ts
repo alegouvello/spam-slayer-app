@@ -17,17 +17,17 @@ type GmailDeleteResult =
       message?: string;
     };
 
-async function deleteEmailPermanently(accessToken: string, emailId: string): Promise<GmailDeleteResult> {
+async function trashEmail(accessToken: string, emailId: string): Promise<GmailDeleteResult> {
   const response = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${emailId}/trash`,
     {
-      method: 'DELETE',
+      method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
 
-  if (response.ok || response.status === 204) {
-    console.log(`Successfully permanently deleted email ${emailId} from Gmail`);
+  if (response.ok) {
+    console.log(`Successfully trashed email ${emailId}`);
     return { ok: true };
   }
 
@@ -47,7 +47,7 @@ async function deleteEmailPermanently(accessToken: string, emailId: string): Pro
     message: payload?.error?.message,
   };
 
-  console.error('Gmail permanent delete error:', { emailId, ...result });
+  console.error('Gmail trash error:', { emailId, ...result });
   return result;
 }
 
@@ -127,7 +127,7 @@ serve(async (req) => {
     if (method === 'header') {
       console.log(`Auto-unsubscribe processed for email ${emailId}`);
       
-      const deleteResult = await deleteEmailPermanently(accessToken, emailId);
+      const deleteResult = await trashEmail(accessToken, emailId);
       const deleted = deleteResult.ok;
       
       await supabase.from('cleanup_history').insert({
@@ -146,16 +146,16 @@ serve(async (req) => {
         success: true, 
         deleted: deleted,
         deleteError: deleted ? null : deleteResult,
-        message: deleted ? 'Successfully unsubscribed and permanently deleted email' : 'Unsubscribed but failed to delete email'
+        message: deleted ? 'Successfully unsubscribed and trashed email' : 'Unsubscribed but failed to trash email'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (method === 'delete_only') {
-      console.log(`Permanent delete processed for email ${emailId}`);
+      console.log(`Trash processed for email ${emailId}`);
       
-      const deleteResult = await deleteEmailPermanently(accessToken, emailId);
+      const deleteResult = await trashEmail(accessToken, emailId);
       const deleted = deleteResult.ok;
       
       await supabase.from('cleanup_history').insert({
@@ -174,7 +174,7 @@ serve(async (req) => {
         success: deleted, 
         deleted: deleted,
         deleteError: deleted ? null : deleteResult,
-        message: deleted ? 'Successfully permanently deleted email' : 'Failed to delete email'
+        message: deleted ? 'Successfully trashed email' : 'Failed to trash email'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
