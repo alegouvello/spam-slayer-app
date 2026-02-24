@@ -18,18 +18,22 @@ function parseListUnsubscribe(header: string | null): { hasHeader: boolean; link
   };
 }
 
-async function fetchAllMessagesFromLabel(
+async function fetchMessagesFromLabel(
   accessToken: string, 
   labelId: string, 
-  folder: string
+  folder: string,
+  maxMessages: number = 100
 ): Promise<Array<{ id: string; folder: string }>> {
   const allMessages: Array<{ id: string; folder: string }> = [];
   let pageToken: string | null = null;
   
   do {
+    const remaining = maxMessages - allMessages.length;
+    if (remaining <= 0) break;
+
     const url = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
     url.searchParams.set('labelIds', labelId);
-    url.searchParams.set('maxResults', '500');
+    url.searchParams.set('maxResults', String(Math.min(remaining, 100)));
     if (pageToken) {
       url.searchParams.set('pageToken', pageToken);
     }
@@ -49,7 +53,7 @@ async function fetchAllMessagesFromLabel(
     
     pageToken = data.nextPageToken || null;
     console.log(`Fetched ${messages.length} ${folder} messages, total so far: ${allMessages.length}`);
-  } while (pageToken);
+  } while (pageToken && allMessages.length < maxMessages);
   
   return allMessages;
 }
@@ -60,7 +64,7 @@ async function fetchMessageDetails(
   accountEmail: string,
   accountId: string
 ): Promise<any[]> {
-  const BATCH_SIZE = 50;
+  const BATCH_SIZE = 20;
   const results: any[] = [];
   
   for (let i = 0; i < messages.length; i += BATCH_SIZE) {
@@ -248,9 +252,9 @@ serve(async (req) => {
       for (const { accessToken, account } of accountsToScan) {
       console.log(`Scanning account: ${account.gmail_email}`);
         
-        const spamMessages = await fetchAllMessagesFromLabel(accessToken, 'SPAM', 'spam');
-        const trashMessages = await fetchAllMessagesFromLabel(accessToken, 'TRASH', 'trash');
-        const inboxMessages = await fetchAllMessagesFromLabel(accessToken, 'INBOX', 'inbox');
+        const spamMessages = await fetchMessagesFromLabel(accessToken, 'SPAM', 'spam', 100);
+        const trashMessages = await fetchMessagesFromLabel(accessToken, 'TRASH', 'trash', 100);
+        const inboxMessages = await fetchMessagesFromLabel(accessToken, 'INBOX', 'inbox', 50);
 
         const allMessages = [...spamMessages, ...trashMessages, ...inboxMessages];
         const uniqueMessages = allMessages.filter((msg, index, self) => 
