@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -231,8 +231,12 @@ export const Dashboard = () => {
     }
   };
 
+  const loadMoreAnchorRef = useRef<string | null>(null);
+
   const handleLoadMore = async () => {
     if (!nextPageTokens) return;
+    // Remember the last email id before loading more
+    loadMoreAnchorRef.current = emails.length > 0 ? emails[emails.length - 1].id : null;
     setIsLoadingMore(true);
     try {
       const { data, error } = await supabase.functions.invoke('gmail-scan', {
@@ -265,6 +269,16 @@ export const Dashboard = () => {
 
       setEmails(prev => [...prev, ...emailsWithFeedback]);
       toast.success(`Loaded ${uniqueNewEmails.length} more emails${data.hasMore ? ' — more available' : ''}`);
+
+      // Scroll to the first newly loaded email
+      if (loadMoreAnchorRef.current) {
+        setTimeout(() => {
+          const anchorEl = document.getElementById(`email-${loadMoreAnchorRef.current}`);
+          if (anchorEl?.nextElementSibling) {
+            anchorEl.nextElementSibling.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+      }
     } catch (error) {
       console.error('Load more error:', error);
       toast.error('Failed to load more emails.');
