@@ -16,7 +16,7 @@ export interface Email {
   senderEmail: string;
   subject: string;
   snippet: string;
-  body?: string;
+  
   date: string;
   hasListUnsubscribe: boolean;
   unsubscribeLink?: string;

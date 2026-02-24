@@ -85,9 +85,7 @@ export const EmailPreviewDialog = ({
 
         <ScrollArea className="flex-1 px-6 py-4">
           <div className="prose prose-sm max-w-none text-foreground">
-            {email.body ? (
-              <div dangerouslySetInnerHTML={{ __html: email.body }} />
-            ) : email.snippet ? (
+            {email.snippet ? (
               <p className="text-muted-foreground">{email.snippet}</p>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
