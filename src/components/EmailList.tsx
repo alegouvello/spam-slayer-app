@@ -79,6 +79,7 @@ export const EmailList = ({ emails, onSelect, onSelectAll, onPreview, onRemove, 
           <div className="space-y-2">
             {emails.map((email, index) => (
               <div 
+                id={`email-${email.id}`}
                 key={email.id}
                 className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all duration-200 hover:shadow-md ${
                   email.selected 
