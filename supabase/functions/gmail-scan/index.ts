@@ -254,7 +254,7 @@ serve(async (req) => {
         
         const spamMessages = await fetchMessagesFromLabel(accessToken, 'SPAM', 'spam', 100);
         const trashMessages = await fetchMessagesFromLabel(accessToken, 'TRASH', 'trash', 100);
-        const inboxMessages = await fetchMessagesFromLabel(accessToken, 'INBOX', 'inbox', 50);
+        const inboxMessages = await fetchMessagesFromLabel(accessToken, 'INBOX', 'inbox', 100);
 
         const allMessages = [...spamMessages, ...trashMessages, ...inboxMessages];
         const uniqueMessages = allMessages.filter((msg, index, self) => 
