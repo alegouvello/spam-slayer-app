@@ -24,10 +24,10 @@ async function fetchMessagesFromLabel(
   folder: string,
   maxMessages: number = 100,
   startPageToken: string | null = null
-): Promise<{ messages: Array<{ id: string; folder: string }>; nextPageToken: string | null }> {
+): Promise<{ messages: Array<{ id: string; folder: string }>; nextPageToken: string | null; totalEstimate: number }> {
   const allMessages: Array<{ id: string; folder: string }> = [];
   let pageToken: string | null = startPageToken;
-  let isFirstRequest = true;
+  let totalEstimate = 0;
   
   do {
     const remaining = maxMessages - allMessages.length;
@@ -53,12 +53,16 @@ async function fetchMessagesFromLabel(
     const messages = (data.messages || []).map((m: any) => ({ id: m.id, folder }));
     allMessages.push(...messages);
     
+    // Capture the estimate from the first response (most accurate)
+    if (totalEstimate === 0 && data.resultSizeEstimate) {
+      totalEstimate = data.resultSizeEstimate;
+    }
+    
     pageToken = data.nextPageToken || null;
-    isFirstRequest = false;
     console.log(`Fetched ${messages.length} ${folder} messages, total so far: ${allMessages.length}`);
   } while (pageToken && allMessages.length < maxMessages);
   
-  return { messages: allMessages, nextPageToken: pageToken };
+  return { messages: allMessages, nextPageToken: pageToken, totalEstimate };
 }
 
 async function fetchMessageDetails(
@@ -254,6 +258,7 @@ serve(async (req) => {
       let totalSpam = 0;
       let totalTrash = 0;
       let totalInbox = 0;
+      let totalEstimateRemaining = 0;
       const nextPageTokens: Record<string, Record<string, string | null>> = {};
 
       for (const { accessToken, account } of accountsToScan) {
@@ -266,9 +271,18 @@ serve(async (req) => {
 
         // Store next page tokens for this account
         const accountNextTokens: Record<string, string | null> = {};
-        if (spamResult.nextPageToken) accountNextTokens.spam = spamResult.nextPageToken;
-        if (trashResult.nextPageToken) accountNextTokens.trash = trashResult.nextPageToken;
-        if (inboxResult.nextPageToken) accountNextTokens.inbox = inboxResult.nextPageToken;
+        if (spamResult.nextPageToken) {
+          accountNextTokens.spam = spamResult.nextPageToken;
+          totalEstimateRemaining += Math.max(0, spamResult.totalEstimate - spamResult.messages.length);
+        }
+        if (trashResult.nextPageToken) {
+          accountNextTokens.trash = trashResult.nextPageToken;
+          totalEstimateRemaining += Math.max(0, trashResult.totalEstimate - trashResult.messages.length);
+        }
+        if (inboxResult.nextPageToken) {
+          accountNextTokens.inbox = inboxResult.nextPageToken;
+          totalEstimateRemaining += Math.max(0, inboxResult.totalEstimate - inboxResult.messages.length);
+        }
         if (Object.keys(accountNextTokens).length > 0) {
           nextPageTokens[account.id] = accountNextTokens;
         }
@@ -303,6 +317,7 @@ serve(async (req) => {
         },
         nextPageTokens: hasMore ? nextPageTokens : null,
         hasMore,
+        remainingEstimate: hasMore ? totalEstimateRemaining : 0,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
