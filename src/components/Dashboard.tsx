@@ -19,7 +19,8 @@ import {
   FolderOpen,
   Users,
   ShieldCheck,
-  History
+  History,
+  ArrowUp
 } from 'lucide-react';
 import { EmailList } from './EmailList';
 import { EmailPreviewDialog } from './EmailPreviewDialog';
@@ -237,6 +238,24 @@ export const Dashboard = () => {
   };
 
   const loadMoreAnchorRef = useRef<string | null>(null);
+  const emailListRef = useRef<HTMLDivElement>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (emailListRef.current) {
+        const rect = emailListRef.current.getBoundingClientRect();
+        // Show button when the email list top is scrolled above viewport
+        setShowBackToTop(rect.top < -200 && emails.length > 0);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [emails.length]);
+
+  const scrollToEmailListTop = () => {
+    emailListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const handleLoadMore = async () => {
     if (!nextPageTokens) return;
@@ -949,7 +968,7 @@ export const Dashboard = () => {
                 </div>
 
                 {/* Email List with glass container */}
-                <div className="bg-white/40 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-black/5 p-6">
+                <div ref={emailListRef} className="bg-white/40 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-black/5 p-6">
                   <EmailList 
                     emails={filteredEmails}
                     onSelect={handleSelectEmail}
@@ -988,6 +1007,19 @@ export const Dashboard = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Back to Top floating button */}
+                {showBackToTop && (
+                  <div className="fixed bottom-6 right-6 z-50">
+                    <Button
+                      size="icon"
+                      onClick={scrollToEmailListTop}
+                      className="rounded-full h-10 w-10 shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+                    >
+                      <ArrowUp className="h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
