@@ -31,17 +31,21 @@ interface EmailSummary {
 // Gmail helpers
 // ─────────────────────────────────────────────────────────────
 
-async function fetchAllMessagesFromLabel(
+async function fetchMessagesFromLabel(
   accessToken: string,
   labelId: string,
+  maxMessages: number = 100
 ): Promise<Array<{ id: string }>> {
   const allMessages: Array<{ id: string }> = [];
   let pageToken: string | null = null;
 
   do {
+    const remaining = maxMessages - allMessages.length;
+    if (remaining <= 0) break;
+
     const url = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages');
     url.searchParams.set('labelIds', labelId);
-    url.searchParams.set('maxResults', '100');
+    url.searchParams.set('maxResults', String(Math.min(remaining, 100)));
     if (pageToken) {
       url.searchParams.set('pageToken', pageToken);
     }
@@ -59,7 +63,7 @@ async function fetchAllMessagesFromLabel(
     const messages = (data.messages || []).map((m: any) => ({ id: m.id }));
     allMessages.push(...messages);
     pageToken = data.nextPageToken || null;
-  } while (pageToken && allMessages.length < 500);
+  } while (pageToken && allMessages.length < maxMessages);
 
   return allMessages;
 }
@@ -70,7 +74,7 @@ async function fetchMessageDetails(
   accountId: string,
 ): Promise<EmailSummary[]> {
   const results: EmailSummary[] = [];
-  const BATCH = 50;
+  const BATCH = 20;
 
   for (let i = 0; i < messageIds.length; i += BATCH) {
     const batch = messageIds.slice(i, i + BATCH);
@@ -247,8 +251,8 @@ async function processUserCleanup(
   // 1) Fetch emails from Spam folder across all connected accounts
   const allEmails: EmailSummary[] = [];
   for (const { accessToken, account } of tokenResults) {
-    const spamMsgs = await fetchAllMessagesFromLabel(accessToken, 'SPAM');
-    const inboxMsgs = await fetchAllMessagesFromLabel(accessToken, 'INBOX');
+    const spamMsgs = await fetchMessagesFromLabel(accessToken, 'SPAM', 100);
+    const inboxMsgs = await fetchMessagesFromLabel(accessToken, 'INBOX', 50);
     console.log(`Account ${account.gmail_email}: ${spamMsgs.length} spam, ${inboxMsgs.length} inbox messages`);
     const allMsgs = [...spamMsgs, ...inboxMsgs];
     // Deduplicate
