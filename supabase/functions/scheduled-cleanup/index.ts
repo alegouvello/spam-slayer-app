@@ -252,7 +252,7 @@ async function processUserCleanup(
   const allEmails: EmailSummary[] = [];
   for (const { accessToken, account } of tokenResults) {
     const spamMsgs = await fetchMessagesFromLabel(accessToken, 'SPAM', 100);
-    const inboxMsgs = await fetchMessagesFromLabel(accessToken, 'INBOX', 50);
+    const inboxMsgs = await fetchMessagesFromLabel(accessToken, 'INBOX', 100);
     console.log(`Account ${account.gmail_email}: ${spamMsgs.length} spam, ${inboxMsgs.length} inbox messages`);
     const allMsgs = [...spamMsgs, ...inboxMsgs];
     // Deduplicate
