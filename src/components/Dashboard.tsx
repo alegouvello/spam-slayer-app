@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Mail, 
@@ -44,6 +45,7 @@ export const Dashboard = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextPageTokens, setNextPageTokens] = useState<Record<string, Record<string, string>> | null>(null);
   const [remainingEstimate, setRemainingEstimate] = useState(0);
+  const [totalEstimate, setTotalEstimate] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -183,6 +185,9 @@ export const Dashboard = () => {
       // Store page tokens for "Load More"
       setNextPageTokens(data.nextPageTokens || null);
       setRemainingEstimate(data.remainingEstimate || 0);
+      // Set total estimate: scanned + remaining
+      const scannedCount = (data.emails || []).length;
+      setTotalEstimate(scannedCount + (data.remainingEstimate || 0));
 
       // Apply learned feedback to pre-flag known spammers (keep all emails for toggle)
       const allEmails = data.emails || [];
@@ -954,6 +959,16 @@ export const Dashboard = () => {
                     onMarkNotSpam={handleMarkNotSpam}
                     safeSenders={safeSenders}
                   />
+                  {nextPageTokens && totalEstimate > 0 && (
+                    <div className="flex flex-col items-center gap-2 pt-4 pb-2">
+                      <div className="w-full max-w-md">
+                        <Progress value={totalEstimate > 0 ? (emails.length / totalEstimate) * 100 : 0} className="h-2" />
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {emails.length} of ~{totalEstimate} emails scanned
+                      </span>
+                    </div>
+                  )}
                   {/* Load More Button */}
                   {nextPageTokens && (
                     <div className="flex justify-center pt-2">
