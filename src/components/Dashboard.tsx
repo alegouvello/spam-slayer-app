@@ -41,6 +41,8 @@ export const Dashboard = () => {
   const [showSafeSenders, setShowSafeSenders] = useState(false);
   const [hiddenSafeCount, setHiddenSafeCount] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextPageTokens, setNextPageTokens] = useState<Record<string, Record<string, string>> | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -177,6 +179,9 @@ export const Dashboard = () => {
 
       if (error) throw error;
 
+      // Store page tokens for "Load More"
+      setNextPageTokens(data.nextPageTokens || null);
+
       // Apply learned feedback to pre-flag known spammers (keep all emails for toggle)
       const allEmails = data.emails || [];
       
@@ -212,12 +217,56 @@ export const Dashboard = () => {
       if (preMarked > 0) {
         message += ` (${preMarked} flagged as spam)`;
       }
+      if (data.hasMore) {
+        message += ` — more available`;
+      }
       toast.success(message);
     } catch (error) {
       console.error('Scan error:', error);
       toast.error('Failed to scan spam folder. Please try again.');
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (!nextPageTokens) return;
+    setIsLoadingMore(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('gmail-scan', {
+        body: { action: 'scan', pageTokens: nextPageTokens }
+      });
+
+      if (error) throw error;
+
+      setNextPageTokens(data.nextPageTokens || null);
+
+      const newEmails = (data.emails || []) as Email[];
+      
+      // Deduplicate against existing emails
+      const existingIds = new Set(emails.map(e => e.id));
+      const uniqueNewEmails = newEmails.filter(e => !existingIds.has(e.id));
+
+      // Apply feedback
+      const emailsWithFeedback = uniqueNewEmails.map((email: Email) => {
+        const senderEmail = email.senderEmail?.toLowerCase();
+        if (senderEmail && senderFeedback[senderEmail] === true) {
+          return {
+            ...email,
+            spamConfidence: 'definitely_spam' as const,
+            aiReasoning: 'Previously marked as spam by you',
+          };
+        }
+        return email;
+      });
+
+      setEmails(prev => [...prev, ...emailsWithFeedback]);
+      toast.success(`Loaded ${uniqueNewEmails.length} more emails${data.hasMore ? ' — more available' : ''}`);
+    } catch (error) {
+      console.error('Load more error:', error);
+      toast.error('Failed to load more emails.');
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -888,6 +937,24 @@ export const Dashboard = () => {
                     onMarkNotSpam={handleMarkNotSpam}
                     safeSenders={safeSenders}
                   />
+                  {/* Load More Button */}
+                  {nextPageTokens && (
+                    <div className="flex justify-center pt-2">
+                      <Button
+                        variant="outline"
+                        onClick={handleLoadMore}
+                        disabled={isLoadingMore}
+                        className="gap-2 rounded-xl border-border/50 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all"
+                      >
+                        {isLoadingMore ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Mail className="h-4 w-4" />
+                        )}
+                        {isLoadingMore ? 'Loading more...' : 'Load More Emails'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
