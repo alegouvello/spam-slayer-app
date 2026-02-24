@@ -22,10 +22,12 @@ async function fetchMessagesFromLabel(
   accessToken: string, 
   labelId: string, 
   folder: string,
-  maxMessages: number = 100
-): Promise<Array<{ id: string; folder: string }>> {
+  maxMessages: number = 100,
+  startPageToken: string | null = null
+): Promise<{ messages: Array<{ id: string; folder: string }>; nextPageToken: string | null }> {
   const allMessages: Array<{ id: string; folder: string }> = [];
-  let pageToken: string | null = null;
+  let pageToken: string | null = startPageToken;
+  let isFirstRequest = true;
   
   do {
     const remaining = maxMessages - allMessages.length;
@@ -52,10 +54,11 @@ async function fetchMessagesFromLabel(
     allMessages.push(...messages);
     
     pageToken = data.nextPageToken || null;
+    isFirstRequest = false;
     console.log(`Fetched ${messages.length} ${folder} messages, total so far: ${allMessages.length}`);
   } while (pageToken && allMessages.length < maxMessages);
   
-  return allMessages;
+  return { messages: allMessages, nextPageToken: pageToken };
 }
 
 async function fetchMessageDetails(
@@ -191,7 +194,7 @@ serve(async (req) => {
       });
     }
 
-    const { action, accountId } = await req.json();
+    const { action, accountId, pageTokens } = await req.json();
     console.log(`Processing action: ${action}`);
 
     if (action === 'check_connection') {
@@ -244,34 +247,50 @@ serve(async (req) => {
         });
       }
 
+      // pageTokens is an object like: { "account_id": { spam: "token", trash: "token", inbox: "token" } }
+      const inputPageTokens: Record<string, Record<string, string>> = pageTokens || {};
+
       let allEmails: any[] = [];
       let totalSpam = 0;
       let totalTrash = 0;
       let totalInbox = 0;
+      const nextPageTokens: Record<string, Record<string, string | null>> = {};
 
       for (const { accessToken, account } of accountsToScan) {
-      console.log(`Scanning account: ${account.gmail_email}`);
+        console.log(`Scanning account: ${account.gmail_email}`);
+        const accountTokens = inputPageTokens[account.id] || {};
         
-        const spamMessages = await fetchMessagesFromLabel(accessToken, 'SPAM', 'spam', 100);
-        const trashMessages = await fetchMessagesFromLabel(accessToken, 'TRASH', 'trash', 100);
-        const inboxMessages = await fetchMessagesFromLabel(accessToken, 'INBOX', 'inbox', 100);
+        const spamResult = await fetchMessagesFromLabel(accessToken, 'SPAM', 'spam', 100, accountTokens.spam || null);
+        const trashResult = await fetchMessagesFromLabel(accessToken, 'TRASH', 'trash', 100, accountTokens.trash || null);
+        const inboxResult = await fetchMessagesFromLabel(accessToken, 'INBOX', 'inbox', 100, accountTokens.inbox || null);
 
-        const allMessages = [...spamMessages, ...trashMessages, ...inboxMessages];
+        // Store next page tokens for this account
+        const accountNextTokens: Record<string, string | null> = {};
+        if (spamResult.nextPageToken) accountNextTokens.spam = spamResult.nextPageToken;
+        if (trashResult.nextPageToken) accountNextTokens.trash = trashResult.nextPageToken;
+        if (inboxResult.nextPageToken) accountNextTokens.inbox = inboxResult.nextPageToken;
+        if (Object.keys(accountNextTokens).length > 0) {
+          nextPageTokens[account.id] = accountNextTokens;
+        }
+
+        const allMessages = [...spamResult.messages, ...trashResult.messages, ...inboxResult.messages];
         const uniqueMessages = allMessages.filter((msg, index, self) => 
           index === self.findIndex(m => m.id === msg.id)
         );
         
-        console.log(`Found ${spamMessages.length} spam + ${trashMessages.length} trash + ${inboxMessages.length} inbox = ${uniqueMessages.length} unique messages for ${account.gmail_email}`);
+        console.log(`Found ${spamResult.messages.length} spam + ${trashResult.messages.length} trash + ${inboxResult.messages.length} inbox = ${uniqueMessages.length} unique messages for ${account.gmail_email}`);
 
         const emails = await fetchMessageDetails(accessToken, uniqueMessages, account.gmail_email, account.id);
         allEmails.push(...emails);
         
-        totalSpam += spamMessages.length;
-        totalTrash += trashMessages.length;
-        totalInbox += inboxMessages.length;
+        totalSpam += spamResult.messages.length;
+        totalTrash += trashResult.messages.length;
+        totalInbox += inboxResult.messages.length;
       }
 
       console.log(`Returning ${allEmails.length} emails total from ${accountsToScan.length} accounts`);
+
+      const hasMore = Object.keys(nextPageTokens).length > 0;
 
       return new Response(JSON.stringify({ 
         emails: allEmails,
@@ -281,7 +300,9 @@ serve(async (req) => {
           inboxCount: totalInbox,
           totalUnique: allEmails.length,
           accountsScanned: accountsToScan.length
-        }
+        },
+        nextPageTokens: hasMore ? nextPageTokens : null,
+        hasMore,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
