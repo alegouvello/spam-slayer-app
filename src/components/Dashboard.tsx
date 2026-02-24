@@ -43,6 +43,7 @@ export const Dashboard = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextPageTokens, setNextPageTokens] = useState<Record<string, Record<string, string>> | null>(null);
+  const [remainingEstimate, setRemainingEstimate] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -181,6 +182,7 @@ export const Dashboard = () => {
 
       // Store page tokens for "Load More"
       setNextPageTokens(data.nextPageTokens || null);
+      setRemainingEstimate(data.remainingEstimate || 0);
 
       // Apply learned feedback to pre-flag known spammers (keep all emails for toggle)
       const allEmails = data.emails || [];
@@ -240,6 +242,7 @@ export const Dashboard = () => {
       if (error) throw error;
 
       setNextPageTokens(data.nextPageTokens || null);
+      setRemainingEstimate(data.remainingEstimate || 0);
 
       const newEmails = (data.emails || []) as Email[];
       
@@ -951,7 +954,7 @@ export const Dashboard = () => {
                         ) : (
                           <Mail className="h-4 w-4" />
                         )}
-                        {isLoadingMore ? 'Loading more...' : 'Load More Emails'}
+                        {isLoadingMore ? 'Loading more...' : remainingEstimate > 0 ? `Load More Emails (~${remainingEstimate} remaining)` : 'Load More Emails'}
                       </Button>
                     </div>
                   )}
